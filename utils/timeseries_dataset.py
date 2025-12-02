@@ -145,6 +145,7 @@ class TimeseriesDataset(Dataset):
 		self.labels = []
 		self.samples = []
 		self.indexes = []
+		self.is_multivariate = True if 'mts' in data_path else False
 
 		if len(self.fnames) == 0:
 			return
@@ -164,8 +165,14 @@ class TimeseriesDataset(Dataset):
 		self.labels = np.asarray(self.labels)
 		self.samples = np.concatenate(self.samples, axis=0)
 
-		# Add channels dimension
-		self.samples = self.samples[:, np.newaxis, :]
+		if self.is_multivariate:
+			# TODO fix hardcode
+			length, n_features = self.samples.shape
+			self.samples = self.samples.reshape(length, -1, 6)
+			self.samples = np.transpose(self.samples, (0, 2, 1))
+		else:
+			# Add channels dimension
+			self.samples = self.samples[:, np.newaxis, :]
 		
 	def __len__(self):
 		return self.labels.size
@@ -193,7 +200,10 @@ class TimeseriesDataset(Dataset):
 
 		# Compute weights
 		labels_exist = np.unique(labels)
-		labels_not_exist = [x for x in np.arange(len(detector_names)) if x not in labels_exist]
+		if self.is_multivariate == False:
+			labels_not_exist = [x for x in np.arange(len(univariate_detector_names)) if x not in labels_exist]
+		else:
+			labels_not_exist = [x for x in np.arange(len(multivariate_detector_names)) if x not in labels_exist]
 		sklearn_class_weights = list(compute_class_weight(class_weight='balanced', classes=np.unique(labels), y=labels))
 		for i in labels_not_exist:
 			sklearn_class_weights.insert(i, 1)

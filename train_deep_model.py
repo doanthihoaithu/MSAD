@@ -119,8 +119,9 @@ def train_deep_model(
 		if read_from_file is not None and "unsupervised" in read_from_file:
 			os.path.join(path_save_results, "unsupervised")
 		eval_set = test_set if len(test_set) > 0 else val_set
+		# TODO fix hardcode
 		eval_deep_model(
-			data_path=data_path, 
+			data_path=data_path,
 			fnames=eval_set,
 			model_name=model_name,
 			model=model,

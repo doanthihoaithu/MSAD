@@ -33,7 +33,8 @@ def create_tmp_dataset(
 	data_path,
 	metric_path,
 	window_size,
-	metric, 
+	metric,
+	mode
 ):
 	"""Generates a new dataset from the given dataset. The time series
 	in the generated dataset have been divided in windows.
@@ -78,7 +79,7 @@ def create_tmp_dataset(
 	)
 
 	# Keep only the metrics of the detectors (remove oracles)
-	metrics_data = metrics_data[univariate_detector_names]
+	metrics_data = metrics_data[univariate_detector_names] if mode == 'univariate' else metrics_data[multivariate_detector_names]
 
 	# Split timeseries and compute labels
 	ts_list, labels = split_and_compute_labels(x, metrics_data, window_size)
@@ -105,7 +106,10 @@ def create_tmp_dataset(
 
 		data = np.concatenate((label[:, np.newaxis], ts), axis=1)
 		col_names = ['label']
-		col_names += ["val_{}".format(i) for i in range(window_size)]
+
+		num_features = (data.shape[1] - 1) // window_size
+		for i in range(1, data.shape[1]):
+			col_names.append(f'val_{(i-1)//num_features}_dim_{(i-1)%num_features}')
 		
 		df = pd.DataFrame(data, index=new_names, columns=col_names)
 		df.to_csv(os.path.join(save_dir, name, dataset_name, ts_name + '.csv'))
@@ -129,16 +133,20 @@ def split_and_compute_labels(x, metrics_data, window_size):
 	), "Lengths and shapes do not match. Please check"
 
 	for ts, metric_label in tqdm(zip(x, metrics_data.idxmax(axis=1)), total=len(x), desc="Create dataset"):
-		
-		# Z-normalization (windows with a single value go to 0)
-		ts = z_normalization(ts, decimals=7)
+
+		if ts.ndim > 1:
+			for i in range(ts.shape[1]):
+				ts[:, i] = z_normalization(ts[:, i], decimals=7)
+		else:
+			# Z-normalization (windows with a single value go to 0)
+			ts = z_normalization(ts, decimals=7)
 
 		# Split time series into windows
 		ts_split = split_ts(ts, window_size)
 		
 		# Save everything to lists
 		ts_list.append(ts_split)
-		labels.append(np.ones(len(ts_split)) * univariate_detector_names.index(metric_label))
+		labels.append(np.ones(len(ts_split)) * multivariate_detector_names.index(metric_label))
 
 	assert(
 		len(x) == len(ts_list) == len(labels)
@@ -179,11 +187,17 @@ def split_ts(data, window_size):
 	k = data[modulo:].shape[0] / window_size
 	assert(math.ceil(k) == k)
 
-	# Split the timeserie
 	data_split = np.split(data[modulo:], k)
 	if modulo != 0:
-		data_split.insert(0, list(data[:window_size]))
-	data_split = np.asarray(data_split)
+		if data.ndim == 1 or data.shape[1] == 1:
+			data_split.insert(0, list(data[:window_size]))
+		else:
+			data_split.insert(0, data[:window_size, :])
+			data_split = np.asarray(data_split)
+
+			if data_split.ndim == 3:
+				k, window_size, n_features = data_split.shape
+			data_split = data_split.reshape(k, window_size * n_features)
 
 	return data_split
 
@@ -217,6 +231,7 @@ if __name__ == "__main__":
 				metric_path=args.metric_path,
 				window_size=size, 
 				metric=args.metric,
+				mode='multivariate'
 			)
 	else:		
 		create_tmp_dataset(
@@ -226,5 +241,6 @@ if __name__ == "__main__":
 			metric_path=args.metric_path,
 			window_size=int(args.window_size), 
 			metric=args.metric,
+			mode='multivariate'
 		)
 

@@ -10,7 +10,7 @@
 ########################################################################
 
 from utils.metrics_loader import MetricsLoader
-from utils.config import TSB_metrics_path, TSB_data_path, detector_names, TSB_acc_tables_path
+from utils.config import TSB_metrics_path, TSB_data_path, univariate_detector_names, TSB_acc_tables_path
 
 import os
 import pandas as pd

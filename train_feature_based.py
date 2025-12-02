@@ -90,9 +90,9 @@ def train_feature_based(data_path, classifier_name, split_per=0.7, seed=None, re
 	test_data = data.loc[data.index.get_level_values("name").isin(test_indexes)]
 	
 	# Split data from labels
-	y_train, X_train = training_data['label'], training_data.drop('label', 1)
-	y_val, X_val = val_data['label'], val_data.drop('label', 1)
-	y_test, X_test = test_data['label'], test_data.drop('label', 1)
+	y_train, X_train = training_data['label'], training_data.drop('label', axis=1)
+	y_val, X_val = val_data['label'], val_data.drop('label', axis=1)
+	y_test, X_test = test_data['label'], test_data.drop('label', axis=1)
 
 	# Select the classifier
 	classifier = classifiers[classifier_name]

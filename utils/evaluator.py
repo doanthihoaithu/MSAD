@@ -87,7 +87,8 @@ class Evaluator:
 			toc = perf_counter()
 			
 			# Save info
-			all_preds.append(detector_names[most_voted[0][0]])
+			# TODO fix multivariate_detector_names
+			all_preds.append(multivariate_detector_names[most_voted[0][0]])
 			inf_time.append(toc-tic)
 		
 		fnames = [x[:-4] for x in fnames]

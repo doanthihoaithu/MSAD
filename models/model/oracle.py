@@ -37,6 +37,7 @@ class Oracle:
 		self.path = metrics_path
 		self.acc = acc
 		self.randomness = randomness
+		self.is_mts = 'mts' in metrics_path
 
 	def fit(self, metric):
 		''' Create the results of the Oracle according to the hyper-parameters
@@ -52,7 +53,7 @@ class Oracle:
 
 		# Read metric's values
 		data = metricsloader.read(metric=metric)
-		data = data[detector_names]
+		data = data[multivariate_detector_names] if self.is_mts else data[univariate_detector_names]
 		fnames = data.index
 		data = data.to_numpy()
 

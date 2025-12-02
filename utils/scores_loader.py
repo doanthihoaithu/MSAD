@@ -119,7 +119,7 @@ class ScoresLoader:
 
 # -----------------------------------------------------
 	
-	@jit
+	@jit(nopython=False)
 	def compute_metric(self, labels, scores, metric, verbose=1, n_jobs=1):
 		'''Computes desired metric for all labels and scores pairs.
 

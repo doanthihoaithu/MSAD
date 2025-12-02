@@ -66,13 +66,21 @@ class DataLoader:
 				if curr_data.ndim != 2:
 					raise ValueError('did not expect this shape of data: \'{}\', {}'.format(fname, curr_data.shape))
 
-				# Skip files with no anomalies
-				if not np.all(curr_data[0, 1] == curr_data[:, 1]):
-					x.append(curr_data[:, 0])
-					y.append(curr_data[:, 1])
-					# Remove path from file name, keep dataset, time series name
-					fname = '/'.join(fname.split('/')[-2:])		
-					fnames.append(fname.replace(self.data_path, ''))
+				if curr_data.shape[1] == 2:
+					# Skip files with no anomalies
+					if not np.all(curr_data[0, 1] == curr_data[:, 1]):
+						x.append(curr_data[:, 0])
+						y.append(curr_data[:, 1])
+						# Remove path from file name, keep dataset, time series name
+						fname = '/'.join(fname.split('/')[-2:])
+						fnames.append(fname.replace(self.data_path, ''))
+				else:
+					if not np.all(curr_data[0, 1] == curr_data[:, 1]):
+						x.append(curr_data[:, :-1])
+						y.append(curr_data[:, -1])
+						# Remove path from file name, keep dataset, time series name
+						fname = '/'.join(fname.split('/')[-2:])
+						fnames.append(fname.replace(self.data_path, ''))
 					
 		return x, y, fnames
 

@@ -24,8 +24,17 @@ TSB_acc_tables_path = "data/TSB/acc_tables/"
 save_done_training = 'results/done_training/'	# when a model is done training a csv with training info is saved here
 path_save_results = 'results/raw_predictions'	# when evaluating a model, the predictions will be saved here
 
+# Important paths
+mts_data_path = "data/mts/data/"
+mts_metrics_path = "data/mts/metrics/"
+mts_scores_path = "data/mts/scores/"
+mts_acc_tables_path = "data/mts/acc_tables/"
+
+mts_save_done_training = 'results_mts/done_training/'	# when a model is done training a csv with training info is saved here
+mts_path_save_results = 'results_mts/raw_predictions'	# when evaluating a model, the predictions will be saved here
+
 # Detector
-detector_names = [
+univariate_detector_names = [
 	'AE', 
 	'CNN', 
 	'HBOS', 
@@ -38,6 +47,15 @@ detector_names = [
 	'OCSVM', 
 	'PCA', 
 	'POLY'
+]
+
+multivariate_detector_names = [
+    'CBLOF',
+	'COF',
+	'COPOD',
+	'HBOS',
+	'LOF',
+	'PCC'
 ]
 
 

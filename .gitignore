@@ -116,3 +116,6 @@ ENV/
 
 # Jupyter Notebook
 .ipynb_checkpoints/
+
+data/mts
+results_mts

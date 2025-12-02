@@ -81,7 +81,10 @@ def eval_feature_based(
 		toc = perf_counter()
 
 		# Save info
-		all_preds.append(detector_names[int(most_voted[0][0])])
+		if 'mts' in data_path:
+			all_preds.append(multivariate_detector_names[int(most_voted[0][0])])
+		else:
+			all_preds.append(univariate_detector_names[int(most_voted[0][0])])
 		inf_time.append(toc-tic)
 	results = pd.DataFrame(data=zip(all_preds, inf_time), columns=["class", "inf"], index=fnames)
 	results.columns = [f"{classifier_name}_{x}" for x in results.columns.values]
