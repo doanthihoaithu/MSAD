@@ -118,5 +118,4 @@ ENV/
 .ipynb_checkpoints/
 
 data/mts
-results_mts
 .hydra
