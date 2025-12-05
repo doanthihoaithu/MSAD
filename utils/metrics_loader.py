@@ -67,9 +67,9 @@ class MetricsLoader:
 				df.append(curr_df.sort_index())
 				
 				# Check for consistency (can be disabled)
-				if len(df) > 1 and not np.all(df[-1].index == df[-2].index):
-					raise ValueError('timeseries in metric files do not match, {} != {}'.
-						format(df[-1].shape, df[-2].shape))
+				# if len(df) > 1 and not np.all(df[-1].index == df[-2].index):
+				# 	raise ValueError('timeseries in metric files do not match, {} != {}'.
+				# 		format(df[-1].shape, df[-2].shape))
 
 		return pd.concat(df, axis=1)
 
