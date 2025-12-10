@@ -449,9 +449,6 @@ from abc import ABC
 from typing import Optional
 
 import numpy as np
-from sklearn.metrics import auc, roc_curve
-from timeeval.metrics import Metric
-from scipy.special import softmax
 from scipy.special import kl_div
 
 

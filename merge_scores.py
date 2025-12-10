@@ -8,10 +8,12 @@
 # @file : merge_scores
 #
 ########################################################################
+import hydra
+from omegaconf import DictConfig
 
 from utils.metrics_loader import MetricsLoader
 from utils.config import TSB_metrics_path, TSB_data_path, univariate_detector_names, TSB_acc_tables_path, \
-	mts_metrics_path, mts_acc_tables_path, multivariate_detector_names
+	multivariate_detector_names
 
 import os
 import pandas as pd
@@ -83,7 +85,7 @@ def merge_scores(path, metric, save_path):
 	print(final_df)
 
 
-def merge_scores_mts(path, metric, save_path):
+def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_path):
 	# Load MetricsLoader object
 	metricsloader = MetricsLoader(mts_metrics_path)
 
@@ -195,38 +197,49 @@ def merge_inference_times(path, save_path):
 	final_df.to_csv(os.path.join(save_path, f'current_inference_time.csv'), index=True)
 	print(final_df)
 
-
-
-if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-		prog='Merge scores',
-		description="Merge all models' scores into one csv"
-	)
-	parser.add_argument('-p', '--path', help='path of the files to merge')
-	parser.add_argument('-m', '--metric', help='metric to use')
-	parser.add_argument('-s', '--save_path', help='where to save the result')
-	parser.add_argument('-mts', '--mts', help='working on mts', default=False, type=bool)
-	parser.add_argument('-time', '--time-true', action="store_true", help='whether to produce time results')
-
-	args = parser.parse_args()
-
-	if args.mts == False:
+@hydra.main(config_path="conf", config_name="config.yaml")
+def main(cfg: DictConfig) -> None:
+	print(f'Merge scores with configuration: {cfg}')
+	if cfg.merge_score_mts == False:
 		merge_scores(
-			path=args.path,
-			metric=args.metric,
-			save_path=args.save_path,
+			path=cfg.merge_score_path,
+			metric=cfg.merge_score_metric,
+			save_path=cfg.merge_score_save_path,
 		)
 	else:
 		merge_scores_mts(
-			path=args.path,
-			metric=args.metric,
-			save_path=args.save_path,
+			path=cfg.merge_score_path,
+			metric=cfg.merge_score_metric,
+			save_path=cfg.merge_score_save_path,
+			mts_metrics_path=cfg.mts_metrics_path,
+			mts_acc_tables_path=cfg.mts_acc_tables_path,
 		)
 
 
-	if args.time_true:
+	if cfg.merge_score_time:
 		merge_inference_times(
-			path=args.path,
-			save_path=args.save_path,
+			path=cfg.merge_score_path,
+			save_path=cfg.merge_score_save_path,
 		)
+
+if __name__ == "__main__":
+
+	# parser = argparse.ArgumentParser(
+	# 	prog='Merge scores',
+	# 	description="Merge all models' scores into one csv"
+	# )
+	# parser.add_argument('-p', '--path', help='path of the files to merge')
+	# parser.add_argument('-m', '--metric', help='metric to use')
+	# parser.add_argument('-s', '--save_path', help='where to save the result')
+	# parser.add_argument('-mts', '--mts', help='working on mts', default=False, type=bool)
+	# parser.add_argument('-time', '--time-true', action="store_true", help='whether to produce time results')
+	#
+	# args = parser.parse_args()
+
+	# --path = results/raw_predictions/
+	# --metric = vus_roc
+	# --save_path = results_mts
+	# --mts = true
+	# -time
+	main()
 

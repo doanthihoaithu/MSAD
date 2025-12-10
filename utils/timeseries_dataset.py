@@ -168,7 +168,7 @@ class TimeseriesDataset(Dataset):
 		if self.is_multivariate:
 			# TODO fix hardcode
 			length, n_features = self.samples.shape
-			self.samples = self.samples.reshape(length, -1, 6)
+			self.samples = self.samples.reshape(length, -1, 7)
 			self.samples = np.transpose(self.samples, (0, 2, 1))
 		else:
 			# Add channels dimension

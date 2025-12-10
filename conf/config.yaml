@@ -17,3 +17,18 @@ run_oracle_eval: false
 
 run_avg_ens_dataset: mts/${mts_running_dataset}
 run_avg_ens_n_jobs: 4
+
+merge_score_mts: true
+merge_score_path: results/raw_predictions/
+merge_score_metric: auc_pr # ['vus_roc', 'vus_pr', 'auc_roc', 'auc_pr', 'interpretability_log_score', 'interpretability_hit_2_score']
+merge_score_save_path: results_mts
+merge_score_time: true
+mts_metrics_path: ${data_folder}/metrics
+mts_acc_tables_path: ${data_folder}/acc_tables
+
+create_windows_dataset_window_size: 16
+create_windows_dataset_name: ${mts_running_dataset}
+create_windows_dataset_save_dir: ${data_folder}
+create_windows_dataset_path: ${data_folder}/data
+create_windows_dataset_metric_path: ${mts_metrics_path}
+create_windows_dataset_metric: AUC_ROC

@@ -12,6 +12,9 @@
 
 import sys
 import os
+
+import hydra
+from omegaconf import DictConfig
 from tqdm import tqdm
 import argparse
 from pathlib import Path
@@ -202,45 +205,54 @@ def split_ts(data, window_size):
 	return data_split
 
 
-
-
-if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-		prog='Create temporary/experiment-specific dataset',
-		description='This function creates a dataset of the size you want.  The data that will be used are set into the config file',
-		epilog='Be careful where you save the generated dataset'
-	)
-
-	parser.add_argument('-n', '--name', type=str, help='path to save the dataset', default="TSB")
-	parser.add_argument('-s', '--save_dir', type=str, help='path to save the dataset', required=True)
-	parser.add_argument('-p', '--path', type=str, help='path of the dataset to divide', required=True)
-	parser.add_argument('-mp', '--metric_path', type=str, help='path to the metrics of the dataset given', default=TSB_metrics_path)
-	parser.add_argument('-w', '--window_size', type=str, help='window size to segment the timeseries to', required=True)
-	parser.add_argument('-m', '--metric', type=str, help='metric to use to produce the labels', default='AUC_PR')
-
-	args = parser.parse_args()
-
-	if args.window_size == "all":
+@hydra.main(config_path="conf", config_name="config.yaml")
+def main(cfg: DictConfig) -> None:
+	if cfg.create_windows_dataset_window_size == "all":
 		window_sizes = [16, 32, 64, 128, 256, 512, 768, 1024]
 
 		for size in window_sizes:
 			create_tmp_dataset(
-				name=args.name,
-				save_dir=args.save_dir,
-				data_path=args.path,
-				metric_path=args.metric_path,
-				window_size=size, 
-				metric=args.metric,
+				name=cfg.create_windows_dataset_name,
+				save_dir=cfg.create_windows_dataset_save_dir,
+				data_path=cfg.create_windows_dataset_path,
+				metric_path=cfg.create_windows_dataset_metric_path,
+				window_size=size,
+				metric=cfg.create_windows_dataset_metric,
 				mode='multivariate'
 			)
-	else:		
+	else:
 		create_tmp_dataset(
-			name=args.name,
-			save_dir=args.save_dir,
-			data_path=args.path,
-			metric_path=args.metric_path,
-			window_size=int(args.window_size), 
-			metric=args.metric,
+			name=cfg.create_windows_dataset_name,
+			save_dir=cfg.create_windows_dataset_save_dir,
+			data_path=cfg.create_windows_dataset_path,
+			metric_path=cfg.create_windows_dataset_metric_path,
+			window_size=cfg.create_windows_dataset_window_size,
+			metric=cfg.create_windows_dataset_metric,
 			mode='multivariate'
 		)
+
+if __name__ == "__main__":
+	# parser = argparse.ArgumentParser(
+	# 	prog='Create temporary/experiment-specific dataset',
+	# 	description='This function creates a dataset of the size you want.  The data that will be used are set into the config file',
+	# 	epilog='Be careful where you save the generated dataset'
+	# )
+	#
+	# parser.add_argument('-n', '--name', type=str, help='path to save the dataset', default="TSB")
+	# parser.add_argument('-s', '--save_dir', type=str, help='path to save the dataset', required=True)
+	# parser.add_argument('-p', '--path', type=str, help='path of the dataset to divide', required=True)
+	# parser.add_argument('-mp', '--metric_path', type=str, help='path to the metrics of the dataset given', default=TSB_metrics_path)
+	# parser.add_argument('-w', '--window_size', type=str, help='window size to segment the timeseries to', required=True)
+	# parser.add_argument('-m', '--metric', type=str, help='metric to use to produce the labels', default='AUC_PR')
+	#
+	# args = parser.parse_args()
+
+	# --name = settings_one
+	# --save_dir = data/mts/settings_one
+	# --path = data/mts/settings_one/data/
+	# --metric_path = data/mts/settings_one/metrics/
+	# --window_size = 32
+	# --metric = AUC_ROC
+	main()
+
 

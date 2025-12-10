@@ -3,6 +3,6 @@
 	"num_blocks":5,
 	"kernel_size":3,
 	"padding":1,
-	"original_dim":6,
+	"original_dim":7,
 	"num_classes":6
 }

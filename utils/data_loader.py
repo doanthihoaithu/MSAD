@@ -150,6 +150,8 @@ class DataLoader:
 			raise ValueError('only accepts list of str')
 
 		for name in pbar:
+			if 'supervised_splits' in name:
+				continue
 			pbar.set_description(f'Loading {name}')
 			
 			for fname in glob.glob(os.path.join(self.data_path, name, '*.csv')):
