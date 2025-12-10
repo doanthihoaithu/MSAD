@@ -444,3 +444,117 @@ def generate_curve(label,score,slidingWindow):
     tpr_3d, fpr_3d, prec_3d, window_3d, avg_auc_3d, avg_ap_3d = metricor().RangeAUC_volume(labels_original=label, score=score, windowSize=1*slidingWindow)
 
     return avg_auc_3d, avg_ap_3d
+
+from abc import ABC
+from typing import Optional
+
+import numpy as np
+from sklearn.metrics import auc, roc_curve
+from timeeval.metrics import Metric
+from scipy.special import softmax
+from scipy.special import kl_div
+
+
+class InterpretabilityHitKScore:
+    """Takes an anomaly scoring and ground truth labels to compute and apply a threshold to the scoring.
+
+    Subclasses of this abstract base class define different strategies to put a threshold over the anomaly scorings.
+    All strategies produce binary labels (0 or 1; 1 for anomalous) in the form of an integer NumPy array.
+    The strategy :class:`~timeeval.metrics.thresholding.NoThresholding` is a special no-op strategy that checks for
+    already existing binary labels and keeps them untouched. This allows applying the metrics on existing binary
+    classification results.
+    """
+
+    def __init__(self, top_k) -> None:
+        self.top_k: Optional[int] = top_k
+
+    def score(self, y_true_multivariate: np.ndarray, y_score_per_var: np.ndarray) -> None:
+        assert y_true_multivariate.ndim == 2
+        assert y_score_per_var.ndim == 2
+        # fpr, tpr, thresholds = roc_curve(y_true.reshape(-1), y_score.reshape(-1))
+        # result = auc(fpr, tpr)
+
+        y_true = (y_true_multivariate.sum(axis=1)>=1).astype(float)
+
+        anomaly_scores_per_var_ranking = np.argsort(y_score_per_var, axis=1)
+        top_k_anomalous_dimension = anomaly_scores_per_var_ranking[:, -self.top_k:]
+        interpretability_list = []
+        for labels, top_k_index in zip(y_true_multivariate, top_k_anomalous_dimension):
+            if labels.sum() != 0.0:
+                interpretability = labels[top_k_index].sum() / labels.sum()
+                interpretability_list.append(interpretability)
+            else:
+                interpretability_list.append(np.nan)
+        # interpretability_scores = np.sqrt(np.power(multivariate_labels-anomaly_scores_per_var,2).sum(axis=1))
+        interpretability_scores = np.array(interpretability_list)
+
+        return interpretability_scores[y_true == 1.0].mean()
+
+    # def supports_continuous_scorings(self) -> bool:
+    #     return True
+    @property
+    def name(self) -> str:
+        return f'Interpretability_Hit_{self.top_k}_Score'.upper()
+
+def distribution_distance(ground_truth: np.ndarray, prediction: np.ndarray) -> float:
+    assert ground_truth.ndim == 1
+    assert prediction.ndim == 1
+
+    return kl_div(ground_truth, prediction).sum()
+
+    # distance = 0
+    #
+    # for distribution_true, distribution_predict in zip(ground_truth, prediction):
+    #     distance += -(distribution_true*np.log(distribution_predict) + abs(distribution_true-distribution_predict)*np.log(abs(distribution_true-distribution_predict)))
+    # return distance
+
+class InterpretabilityLogScore:
+    """Takes an anomaly scoring and ground truth labels to compute and apply a threshold to the scoring.
+
+    Subclasses of this abstract base class define different strategies to put a threshold over the anomaly scorings.
+    All strategies produce binary labels (0 or 1; 1 for anomalous) in the form of an integer NumPy array.
+    The strategy :class:`~timeeval.metrics.thresholding.NoThresholding` is a special no-op strategy that checks for
+    already existing binary labels and keeps them untouched. This allows applying the metrics on existing binary
+    classification results.
+    """
+
+    def __init__(self, include_negative: bool) -> None:
+        self.include_negative: Optional[int] = include_negative
+
+    def score(self, y_true_multivariate: np.ndarray, y_score_per_var: np.ndarray) -> None:
+        assert y_true_multivariate.ndim == 2
+        assert y_score_per_var.ndim == 2
+        # fpr, tpr, thresholds = roc_curve(y_true.reshape(-1), y_score.reshape(-1))
+        # result = auc(fpr, tpr)
+
+        y_true = (y_true_multivariate.sum(axis=1)>=1).astype(float)
+
+        # anomaly_scores_per_var_ranking = np.argsort(y_score_per_var, axis=1)
+        # top_k_anomalous_dimension = anomaly_scores_per_var_ranking[:, -self.top_k:]
+        interpretability_list = []
+        # smooth = 0.1
+        y_score_per_var = np.where(y_score_per_var < 0, 0, y_score_per_var)
+        y_score_per_var = y_score_per_var/y_score_per_var.sum(axis=1, keepdims=True)
+        y_true_multivariate = y_true_multivariate + 0.1
+        y_true_multivariate = y_true_multivariate/ y_true_multivariate.sum(axis=1, keepdims=True)
+        for labels, anomaly_score_per_var, aggregated_label in zip(y_true_multivariate, y_score_per_var, y_true):
+            # labels = softmax(labels)
+            # anomaly_score_per_var = softmax(anomaly_score_per_var)
+            interpretability = distribution_distance(labels, anomaly_score_per_var)
+            if self.include_negative:
+                interpretability_list.append(interpretability)
+            else:
+                if aggregated_label != 0.0:
+                    interpretability_list.append(interpretability)
+                else:
+                    interpretability_list.append(np.nan)
+        # interpretability_scores = np.sqrt(np.power(multivariate_labels-anomaly_scores_per_var,2).sum(axis=1))
+        interpretability_scores = np.array(interpretability_list)
+
+        return interpretability_scores[y_true == 1].mean()
+
+    # def supports_continuous_scorings(self) -> bool:
+    #     return True
+    @property
+    def name(self) -> str:
+        return f'Interpretability_Log_Score'.upper()

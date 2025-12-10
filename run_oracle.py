@@ -11,10 +11,13 @@
 
 import argparse
 import os
+
+import hydra
 import pandas as pd
 import matplotlib.pyplot as plt
 from natsort import natsorted, ns
 import seaborn as sns
+from omegaconf import DictConfig
 from tqdm import tqdm
 
 from models.model.oracle import Oracle
@@ -83,43 +86,50 @@ def eval_oracle(path):
 	plt.tight_layout()
 	plt.show()
 
-
-if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-		prog='run_oracle',
-		description="Create the oracle with the accuracy value you\
-		want to simulate"
-	)
-	parser.add_argument('-p', '--path', type=str, required=True,
-		help='Path to metrics'
-	)
-	parser.add_argument('-a', '--acc', type=str, default="1.0", 
-		help='The accuracy that you want to simulate'
-	)
-	parser.add_argument('-r', '--randomness', type=str, default='true',
-		help='The randomness that you want to simulate'
-	)
-	parser.add_argument('--eval', action='store_true', help='Evaluate the oracles without creating new ones')
-	
-	args = parser.parse_args()
-
+@hydra.main(config_path="conf", config_name="config.yaml")
+def main(cfg: DictConfig) -> None:
+	print(f'Running oracle with config: {cfg}')
 	# Run single
-	if not args.eval:
-		if args.acc != 'all':
+	if not cfg.run_oracle_eval:
+		if cfg.run_oracle_acc != 'all':
 			create_oracle(
-				path=args.path, 
-				acc=float(args.acc), 
-				randomness=args.randomness
+				path=cfg.run_oracle_metric_path,
+				acc=float(cfg.run_oracle_acc),
+				randomness=cfg.run_oracle_randomness
 			)
-		elif args.acc == 'all':
-			acc_all = [1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05, 0.00]
-			
+		elif cfg.run_oracle_acc == 'all':
+			acc_all = [1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2,
+					   0.15, 0.1, 0.05, 0.00]
+
 			for acc in tqdm(acc_all, desc='Oracle'):
 				create_oracle(
-				path=args.path, 
-				acc=acc, 
-				randomness=args.randomness
-			)
+					path=cfg.run_oracle_metric_path,
+					acc=acc,
+					randomness=cfg.run_oracle_randomness
+				)
 	else:
 		# Evaluate with boxplot
-		eval_oracle(path=args.path)
+		eval_oracle(path=cfg.run_oracle_metric_path)
+
+
+
+if __name__ == "__main__":
+	# parser = argparse.ArgumentParser(
+	# 	prog='run_oracle',
+	# 	description="Create the oracle with the accuracy value you\
+	# 	want to simulate"
+	# )
+	# parser.add_argument('-p', '--path', type=str, required=True,
+	# 	help='Path to metrics'
+	# )
+	# parser.add_argument('-a', '--acc', type=str, default="1.0",
+	# 	help='The accuracy that you want to simulate'
+	# )
+	# parser.add_argument('-r', '--randomness', type=str, default='true',
+	# 	help='The randomness that you want to simulate'
+	# )
+	# parser.add_argument('--eval', action='store_true', help='Evaluate the oracles without creating new ones')
+	main()
+	
+	# args = parser.parse_args()
+

@@ -11,11 +11,12 @@
 
 import multiprocessing
 import multiprocessing.pool as mpp
+import re
 
 from utils.metrics_loader import MetricsLoader
 from utils.data_loader import DataLoader
 # from utils.config import *
-from utils.metrics import generate_curve
+from utils.metrics import generate_curve, InterpretabilityLogScore, InterpretabilityHitKScore
 
 from numba import jit
 import os, glob
@@ -91,6 +92,50 @@ class ScoresLoader:
 
 		return scores, idx_failed
 
+	def load_multivariate_score_distribution(self, file_names):
+		'''
+		Load the score for the specified files/timeseries. If a time series has no score for all
+		the detectors (e.g. the anomaly score has been computed for 10/12 detectors) the this
+		time series is skipped. Its index is returned in the idx_failed for the user to remove
+		it from any other places if needed.
+
+		:param dataset: list of files
+		:return scores: the loaded scores
+		:return idx_failed: list with indexes of not loaded time series
+		'''
+		detectors = self.get_detector_names()
+		scores = []
+		idx_failed = []
+		distribution_scores = []
+		for i, name in enumerate(tqdm(file_names, desc='Loading scores')):
+			name_split = name.split('/')[-2:]
+			paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', name_split[1]) for detector in detectors]
+			score_distribution_paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', f'{name_split[1]}.score_distribution') for detector in
+					 detectors]
+			data = []
+			score_distribution_data = []
+			try:
+				for path, score_distribution_path in zip(paths, score_distribution_paths):
+					data.append(pd.read_csv(path, header=None).to_numpy())
+					score_distribution = pd.read_csv(score_distribution_path, header=None).to_numpy()
+					assert score_distribution.ndim == 2
+					score_distribution = score_distribution/score_distribution.sum(axis=1, keepdims=True)
+					score_distribution_data.append(score_distribution)
+
+			except Exception as e:
+				idx_failed.append(i)
+				continue
+			scores.append(np.concatenate(data, axis=1))
+			distribution_scores.append(np.stack(score_distribution_data, axis=1))
+
+		# Delete ts which failed to load
+		if len(idx_failed) > 0:
+			print('failed to load')
+			for idx in sorted(idx_failed, reverse=True):
+				print('\t\'{}\''.format(file_names[idx]))
+				# del file_names[idx]
+
+		return scores, distribution_scores, idx_failed
 
 	def write(self, file_names, detector, score, metric):
 		'''Write some scores for a specific detector
@@ -141,13 +186,45 @@ class ScoresLoader:
 			pool = multiprocessing.Pool(n_jobs)
 
 			results = []
-			for result in tqdm(pool.istarmap(self.compute_single_sample, args), total=len(args)):
+			for result in tqdm(pool.istarmap(self.compute_single_sample, args), total=len(args), desc="Computing metrics..."):
 				results.append(result)
 
 			results = np.asarray([x.tolist() for x in results])
 		else:
 			for i, x, y in tqdm(zip(range(n_files), labels, scores), total=n_files, desc='Compute {}'.format(metric), disable=not verbose):
 				results.append(self.compute_single_sample(x, y, metric))
+			results = np.asarray(results)
+
+		return results
+
+	def compute_interpretability_metric(self, multivariate_labels, distribution_scores, metric, verbose=1, n_jobs=1):
+		'''Computes desired metric for all labels and scores pairs.
+
+		:param multivariate_labels: list of 2D arrays each representing the labels of a timeseries/sample
+		:param distribution_scores: list of 3D arrays representing the scores of each detector on a
+						timeseries/sample.
+		:param metric: str, name of metric to produce
+		:param verbose: to print or not to print info
+		:return: metric values
+		'''
+		n_files = len(multivariate_labels)
+		results = []
+
+		if len(multivariate_labels) != len(distribution_scores):
+			raise ValueError("length of labels and length of scores not the same")
+
+		if distribution_scores[0].ndim == 1 or distribution_scores[0].shape[-1] == 1:
+			args = [x + (metric,) for x in list(zip(multivariate_labels, distribution_scores))]
+			pool = multiprocessing.Pool(n_jobs)
+
+			results = []
+			for result in tqdm(pool.istarmap(self.compute_single_sample, args), total=len(args), desc="Computing metrics..."):
+				results.append(result)
+
+			results = np.asarray([x.tolist() for x in results])
+		else:
+			for i, x, y in tqdm(zip(range(n_files), multivariate_labels, distribution_scores), total=n_files, desc='Compute {}'.format(metric), disable=not verbose):
+				results.append(self.compute_single_multivariate_sample(x, y, metric))
 			results = np.asarray(results)
 
 		return results
@@ -192,6 +269,47 @@ class ScoresLoader:
 		'''
 
 		return result.T
+
+	def compute_single_multivariate_sample(self, multivariate_label, multivariate_score, metric):
+		'''Compute a metric for a single sample and multiple scores.
+
+		:param multivariate_label: 2D array of 0, 1 labels, (len_ts)
+		:param multivariate_score: 3D array, (len_ts, n_det, n_feature)
+		:param metric: string to which metric to compute
+		:return: an array of values, one for each score
+		'''
+		if multivariate_label.shape[0] != multivariate_score.shape[0]:
+			raise ValueError(
+				"label and score first dimension do not match. {} != {}".format(multivariate_label.shape[0], multivariate_score.shape[0]))
+
+		if multivariate_label.ndim > 2:
+			raise ValueError("label has more dimensions than expected.")
+
+		tick = time.process_time()
+		result = self.compute_single_multivariate_metric(multivariate_score, multivariate_label, metric)
+
+		'''
+		# Evaluate the computed metrics
+		fig, ax = plt.subplots(3, 4, figsize=(15, 10))
+		best = np.argmax(result)
+		x = np.linspace(0, label.shape[0], label.shape[0])
+		for i, axis in enumerate(ax):
+			for j, axs in enumerate(axis):
+				if i*4 + j == best:
+					axs.patch.set_alpha(0.3)
+					axs.patch.set_facecolor('green')
+				axs.title.set_text('{:.1f}%'.format(result[i*4 + j]*100))
+				axs.set_xlim([0, x[-1]])
+				axs.set_ylim([0, 1])
+				axs.plot(label, label='label', color='k', linewidth=2)
+				axs.plot(score[:, i*4 + j], label='score')
+				axs.legend()
+				axs.fill_between(x, label, score[:, i*4 + j])
+				plt.tight_layout()
+		plt.show()
+		'''
+
+		return result
 
 	@jit
 	def estimate_max_length(self, label):
@@ -252,6 +370,36 @@ class ScoresLoader:
 			_, result = generate_curve(label, score, 2*10)
 		elif metric == 'vus':
 			result = generate_curve(label, score, 2*10)
+		# elif metric.startswith('interpretability_hit'):
+		# 	result = generate_curve(label, score, 2 * 10)
+		# elif metric.startswith('interpretability_log'):
+		# 	result = generate_curve(label, score, 2 * 10)
+		else:
+			raise ValueError("can't recognize metric requested")
+
+		# result = round(result, 5)
+		# if result > 1 or result < 0:
+		# 	print('>> Pottentially faulty metrics result {}'.format(result))
+
+		return result
+
+	def compute_single_multivariate_metric(self, multivariate_scores, multivariate_labels, metric):
+		'''Compute a metric for a single sample and score.
+
+		:param multivariate_labels: 1D array of 0, 1 labels
+		:param multivariate_scores: 1D array same length as label
+		:param metric: string to which metric to compute
+		:return: a single value
+		'''
+		if multivariate_labels.shape != multivariate_scores.shape:
+			raise ValueError("label and metric should have the same length.")
+
+		metric = metric.lower()
+		if metric.startswith('interpretability_hit'):
+			top_k = int(re.search(r'\d+', metric).group())
+			result = InterpretabilityHitKScore(top_k).score(multivariate_labels, multivariate_scores)
+		elif metric.startswith('interpretability_log'):
+			result = InterpretabilityLogScore(include_negative=False).score(multivariate_labels, multivariate_scores)
 		else:
 			raise ValueError("can't recognize metric requested")
 

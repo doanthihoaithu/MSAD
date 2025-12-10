@@ -84,6 +84,57 @@ class DataLoader:
 					
 		return x, y, fnames
 
+	def load_with_interpretability(self, dataset):
+		'''
+		Loads the specified datasets
+
+		:param dataset: list of datasets
+		:return x: timeseries
+		:return y: corresponding labels
+		:return fnames: list of names of the timeseries loaded
+		'''
+		multivariate_x = []
+		multivariate_y = []
+		y = []
+		fnames = []
+
+		if not isinstance(dataset, list):
+			raise ValueError('only accepts list of str')
+
+		pbar = tqdm(dataset)
+		for name in pbar:
+			pbar.set_description('Loading ' + name)
+			for fname, fname_multivariate_labels in zip(glob.glob(os.path.join(self.data_path, name, '*.out')), glob.glob(os.path.join(self.data_path, name, '*.out.multivariate_labels'))):
+				curr_data = pd.read_csv(fname, header=None).to_numpy()
+				curr_multivariate_label_data = pd.read_csv(fname_multivariate_labels, header=None).to_numpy()
+
+				assert curr_data.shape[0] == curr_multivariate_label_data.shape[0]
+				assert curr_data.shape[1] == curr_multivariate_label_data.shape[1] + 1
+
+				if curr_data.ndim != 2:
+					raise ValueError('did not expect this shape of data: \'{}\', {}'.format(fname, curr_data.shape))
+				if curr_multivariate_label_data.ndim != 2:
+					raise ValueError('did not expect this shape of data: \'{}\', {}'.format(fname_multivariate_labels, curr_multivariate_label_data.shape))
+
+				if curr_data.shape[1] == 2:
+					# Skip files with no anomalies
+					if not np.all(curr_data[0, 1] == curr_data[:, 1]):
+						multivariate_x.append(curr_data[:, 0])
+						multivariate_y.append(curr_data[:, 1])
+						y.append(curr_data[:, 1])
+						# Remove path from file name, keep dataset, time series name
+						fname = '/'.join(fname.split('/')[-2:])
+						fnames.append(fname.replace(self.data_path, ''))
+				else:
+					if not np.all(curr_data[0, 1] == curr_data[:, 1]):
+						multivariate_x.append(curr_data[:, :-1])
+						y.append(curr_data[:, -1])
+						multivariate_y.append(curr_multivariate_label_data)
+						# Remove path from file name, keep dataset, time series name
+						fname = '/'.join(fname.split('/')[-2:])
+						fnames.append(fname.replace(self.data_path, ''))
+
+		return multivariate_x, y, multivariate_y, fnames
 
 	def load_df(self, dataset):
 		'''

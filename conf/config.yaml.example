@@ -1,0 +1,19 @@
+hydra:
+  job:
+    chdir: true  # to save objects in a working directory
+  run:
+    dir: .  # Disable Hydra's Directory Change
+
+random:
+  seed: 42
+
+
+mts_running_dataset: settings_two
+data_folder: data/mts/${mts_running_dataset}
+run_oracle_metric_path: ${data_folder}/metrics
+run_oracle_acc: 1
+run_oracle_randomness: 'true'
+run_oracle_eval: false
+
+run_avg_ens_dataset: mts/${mts_running_dataset}
+run_avg_ens_n_jobs: 4

@@ -60,7 +60,7 @@ class Oracle:
 		# Flip a coin for every timeserie according to the accuracy
 		coin = np.random.choice([True, False], data.shape[0], p=[self.acc, 1 - self.acc])
 		score = np.zeros(data.shape[0])
-		argmax = np.argmax(data, axis=1)
+		argmax = np.argmin(data, axis=1) if metric == 'INTERPRETABILITY_LOG_SCORE' else np.argmax(data, axis=1)
 		inv_coin = np.invert(coin)
 	
 		# Create a 2d array that includes all detectors except the correct
