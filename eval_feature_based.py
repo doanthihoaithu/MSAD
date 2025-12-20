@@ -90,12 +90,14 @@ def eval_feature_based(
 	results.columns = [f"{classifier_name}_{x}" for x in results.columns.values]
 	
 	# Print results
-	print(results)
+	# print(results)
+
 
 	# Save the results
 	if path_save is not None:
 		file_name = os.path.join(path_save, f"{classifier_name}_preds.csv")
 		results.to_csv(file_name)
+		print(f'Saved predictions to {file_name}')
 
 
 if __name__ == "__main__":

@@ -13,6 +13,9 @@ import argparse
 import os
 import re
 from time import perf_counter
+
+import hydra
+from omegaconf import DictConfig
 from tqdm import tqdm
 from datetime import datetime
 
@@ -148,25 +151,35 @@ def run_rocket(data_path, split_per=0.7, seed=None, read_from_file=None, eval_mo
 			fnames=eval_set,
 		)
 
+@hydra.main(config_path="conf", config_name="config.yaml")
+def main(cfg: DictConfig) -> None:
+	rocket_config = cfg.model_selection.rocket_config
+	run_rocket(
+		data_path=rocket_config.path,
+		split_per=rocket_config.split_per,
+		seed=cfg.random.seed,
+		read_from_file=rocket_config.file,
+		eval_model=rocket_config.eval,
+		path_save=rocket_config.path_save,
+	)
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-		prog='train_rocket',
-		description='Script for training the MiniRocket feature_extractor+classifier',
-	)
-	parser.add_argument('-p', '--path', type=str, help='path to the dataset to use', required=True)
-	parser.add_argument('-sp', '--split_per', type=float, help='split percentage for train and val sets', default=0.7)
-	parser.add_argument('-s', '--seed', type=int, help='seed for splitting train, val sets (use small number)', default=None)
-	parser.add_argument('-f', '--file', type=str, help='path to file that contains a specific split', default=None)
-	parser.add_argument('-e', '--eval-true', action="store_true", help='whether to evaluate the model on test data after training')
-	parser.add_argument('-ps', '--path_save', type=str, help='path to save the trained classifier', default="results/weights")
+	# parser = argparse.ArgumentParser(
+	# 	prog='train_rocket',
+	# 	description='Script for training the MiniRocket feature_extractor+classifier',
+	# )
+	# parser.add_argument('-p', '--path', type=str, help='path to the dataset to use', required=True)
+	# parser.add_argument('-sp', '--split_per', type=float, help='split percentage for train and val sets', default=0.7)
+	# parser.add_argument('-s', '--seed', type=int, help='seed for splitting train, val sets (use small number)', default=None)
+	# parser.add_argument('-f', '--file', type=str, help='path to file that contains a specific split', default=None)
+	# parser.add_argument('-e', '--eval-true', action="store_true", help='whether to evaluate the model on test data after training')
+	# parser.add_argument('-ps', '--path_save', type=str, help='path to save the trained classifier', default="results/weights")
+	#
+	# args = parser.parse_args()
+	# --path=data/mts/settings_two/settings_two_32/
+	# --split_per=0.5
+	# --file=data/mts/settings_two/settings_two_32/supervised_splits/train_test_split.csv
+	# --eval-true
+	# --path_save=results/weights/supervised
+	main()
 
-	args = parser.parse_args()
-	run_rocket(
-		data_path=args.path,
-		split_per=args.split_per,
-		seed=args.seed,
-		read_from_file=args.file,
-		eval_model=args.eval_true,
-		path_save=args.path_save,
-	)

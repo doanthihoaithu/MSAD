@@ -90,12 +90,12 @@ def eval_oracle(path):
 def main(cfg: DictConfig) -> None:
 	print(f'Running oracle with config: {cfg}')
 	# Run single
-	if not cfg.run_oracle_eval:
-		if cfg.run_oracle_acc != 'all':
+	if not cfg.run_oracle.eval:
+		if cfg.run_oracle.acc != 'all':
 			create_oracle(
-				path=cfg.run_oracle_metric_path,
-				acc=float(cfg.run_oracle_acc),
-				randomness=cfg.run_oracle_randomness
+				path=cfg.run_oracle.metric_path,
+				acc=float(cfg.run_oracle.acc),
+				randomness=cfg.run_oracle.randomness
 			)
 		elif cfg.run_oracle_acc == 'all':
 			acc_all = [1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2,
@@ -103,13 +103,13 @@ def main(cfg: DictConfig) -> None:
 
 			for acc in tqdm(acc_all, desc='Oracle'):
 				create_oracle(
-					path=cfg.run_oracle_metric_path,
+					path=cfg.run_oracle.metric_path,
 					acc=acc,
-					randomness=cfg.run_oracle_randomness
+					randomness=cfg.run_oracle.randomness
 				)
 	else:
 		# Evaluate with boxplot
-		eval_oracle(path=cfg.run_oracle_metric_path)
+		eval_oracle(path=cfg.run_oracle.metric_path)
 
 
 
@@ -129,6 +129,7 @@ if __name__ == "__main__":
 	# 	help='The randomness that you want to simulate'
 	# )
 	# parser.add_argument('--eval', action='store_true', help='Evaluate the oracles without creating new ones')
+	# --path = data / mts / settings_two / metrics - -acc = 1 - -randomness = true
 	main()
 	
 	# args = parser.parse_args()

@@ -8,12 +8,14 @@
 # @file : generate_features
 #
 ########################################################################
-
+import hydra
 import numpy as np
 import pandas as pd
 import argparse
 import re
 import os
+
+from omegaconf import DictConfig
 
 from utils.data_loader import DataLoader
 
@@ -61,16 +63,21 @@ def generate_features(path):
 	# Save new features
 	X_transformed.to_csv(os.path.join(path, new_name))
 
+@hydra.main(config_path="conf", config_name="config.yaml")
+def main(cfg: DictConfig) -> None:
+	generate_features(
+		path=cfg.generate_features.path,
+	)
+
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-		prog='generate_features',
-		description='Transform a dataset of time series (of equal length) to tabular data\
-		with TSFresh'
-	)
-	parser.add_argument('-p', '--path', type=str, help='path to the dataset to use')
-	
-	args = parser.parse_args()
-	generate_features(
-		path=args.path, 
-	)
+	# parser = argparse.ArgumentParser(
+	# 	prog='generate_features',
+	# 	description='Transform a dataset of time series (of equal length) to tabular data\
+	# 	with TSFresh'
+	# )
+	# parser.add_argument('-p', '--path', type=str, help='path to the dataset to use')
+	#
+	# args = parser.parse_args()
+	# --path = data / mts / settings_two / settings_two_32
+	main()

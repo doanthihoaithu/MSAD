@@ -12,11 +12,14 @@
 import argparse
 import os
 import re
+
+import hydra
 import silence_tensorflow.auto
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
+from omegaconf import DictConfig
 
 from utils.train_deep_model_utils import ModelExecutioner, json_file
 
@@ -42,7 +45,7 @@ def train_deep_model(
 ):
 
 	# Set up
-	window_size = int(re.search(r'\d+', str(args.path)).group())
+	window_size = int(re.search(r'\d+', str(data_path)).group())
 	device = 'cuda'
 	save_runs = 'results/runs/'
 	save_weights = 'results/weights/'
@@ -127,33 +130,71 @@ def train_deep_model(
 			model=model,
 			path_save=path_save_results,
 		)
-	
+
+@hydra.main(config_path="conf", config_name="config.yaml")
+def main(cfg: DictConfig) -> None:
+	train_deep_model_config = cfg.model_selection.deep_model_config
+	if train_deep_model_config.model_name == 'all':
+		for model_name in ['resnet','convnet']:
+			model_parameters_file = train_deep_model_config.model_parameters_file.replace('all_default.json', f'{model_name}_default.json')
+
+			train_deep_model(
+				data_path=train_deep_model_config.data_path,
+				split_per=train_deep_model_config.split_per,
+				seed=train_deep_model_config.seed,
+				read_from_file=train_deep_model_config.read_from_file,
+				model_name=model_name,
+				model_parameters_file=model_parameters_file,
+				batch_size=train_deep_model_config.batch_size,
+				epochs=train_deep_model_config.epochs,
+				eval_model=train_deep_model_config.eval_model
+			)
+	else:
+		train_deep_model(
+			data_path=train_deep_model_config.data_path,
+			split_per=train_deep_model_config.split_per,
+			seed=train_deep_model_config.seed,
+			read_from_file=train_deep_model_config.read_from_file,
+			model_name=train_deep_model_config.model_name,
+			model_parameters_file=train_deep_model_config.model_parameters_file,
+			batch_size=train_deep_model_config.batch_size,
+			epochs=train_deep_model_config.epochs,
+			eval_model=train_deep_model_config.eval_model
+		)
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-		prog='run_experiment',
-		description='This function is made so that we can easily run configurable experiments'
-	)
-	
-	parser.add_argument('-p', '--path', type=str, help='path to the dataset to use', required=True)
-	parser.add_argument('-s', '--split', type=float, help='split percentage for train and val sets', default=0.7)
-	parser.add_argument('-se', '--seed', type=int, default=None, help='Seed for train/val split')
-	parser.add_argument('-f', '--file', type=str, help='path to file that contains a specific split', default=None)
-	parser.add_argument('-m', '--model', type=str, help='model to run', required=True)
-	parser.add_argument('-pa', '--params', type=str, help="a json file with the model's parameters", required=True)
-	parser.add_argument('-b', '--batch', type=int, help='batch size', default=64)
-	parser.add_argument('-ep', '--epochs', type=int, help='number of epochs', default=10)
-	parser.add_argument('-e', '--eval-true', action="store_true", help='whether to evaluate the model on test data after training')
+	# parser = argparse.ArgumentParser(
+	# 	prog='run_experiment',
+	# 	description='This function is made so that we can easily run configurable experiments'
+	# )
+	#
+	# parser.add_argument('-p', '--path', type=str, help='path to the dataset to use', required=True)
+	# parser.add_argument('-s', '--split', type=float, help='split percentage for train and val sets', default=0.7)
+	# parser.add_argument('-se', '--seed', type=int, default=None, help='Seed for train/val split')
+	# parser.add_argument('-f', '--file', type=str, help='path to file that contains a specific split', default=None)
+	# parser.add_argument('-m', '--model', type=str, help='model to run', required=True)
+	# parser.add_argument('-pa', '--params', type=str, help="a json file with the model's parameters", required=True)
+	# parser.add_argument('-b', '--batch', type=int, help='batch size', default=64)
+	# parser.add_argument('-ep', '--epochs', type=int, help='number of epochs', default=10)
+	# parser.add_argument('-e', '--eval-true', action="store_true", help='whether to evaluate the model on test data after training')
+	#
+	# args = parser.parse_args()
+	# --path=data/mts/settings_two/settings_two_32
+	# --split=0.5
+	# --file=data/mts/settings_two/settings_two_32/supervised_splits/train_test_split.csv
+	# --model=resnet
+	# --params=models/configuration/resnet_default.json
+	# --batch=256
+	# --epochs=100
+	# --eval-true
 
-	args = parser.parse_args()
-	train_deep_model(
-		data_path=args.path,
-		split_per=args.split,
-		seed=args.seed,
-		read_from_file=args.file,
-		model_name=args.model,
-		model_parameters_file=args.params,
-		batch_size=args.batch,
-		epochs=args.epochs,
-		eval_model=args.eval_true
-	)
+	# --path=data/mts/settings_two/settings_two_32
+	# --split=0.5
+	# --file=data/mts/settings_two/settings_two_32/supervised_splits/train_test_split.csv
+	# --model=convnet
+	# --params=models/configuration/convnet_default.json
+	# --batch=256
+	# --epochs=100
+	# --eval-true
+	main()
+

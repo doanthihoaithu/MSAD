@@ -59,7 +59,7 @@ def create_tmp_dataset(
 
 	# Load metrics
 	metricsloader = MetricsLoader(metric_path)
-	metrics_data = metricsloader.read(metric)
+	metrics_data = metricsloader.read(metric.upper())
 
 	# Delete any data not in metrics (some timeseries metric scores were not computed)
 	idx_to_delete = [i for i, x in enumerate(fnames) if x not in metrics_data.index]
@@ -207,27 +207,27 @@ def split_ts(data, window_size):
 
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
-	if cfg.create_windows_dataset_window_size == "all":
+	if cfg.create_windows_dataset.window_size == "all":
 		window_sizes = [16, 32, 64, 128, 256, 512, 768, 1024]
 
 		for size in window_sizes:
 			create_tmp_dataset(
-				name=cfg.create_windows_dataset_name,
-				save_dir=cfg.create_windows_dataset_save_dir,
-				data_path=cfg.create_windows_dataset_path,
-				metric_path=cfg.create_windows_dataset_metric_path,
+				name=cfg.create_windows_dataset.dataset_name,
+				save_dir=cfg.create_windows_dataset.save_dir,
+				data_path=cfg.create_windows_dataset.path,
+				metric_path=cfg.create_windows_dataset.metric_path,
 				window_size=size,
-				metric=cfg.create_windows_dataset_metric,
+				metric=cfg.create_windows_dataset.metric_for_labeling_windows,
 				mode='multivariate'
 			)
 	else:
 		create_tmp_dataset(
-			name=cfg.create_windows_dataset_name,
-			save_dir=cfg.create_windows_dataset_save_dir,
-			data_path=cfg.create_windows_dataset_path,
-			metric_path=cfg.create_windows_dataset_metric_path,
-			window_size=cfg.create_windows_dataset_window_size,
-			metric=cfg.create_windows_dataset_metric,
+			name=cfg.create_windows_dataset.dataset_name,
+			save_dir=cfg.create_windows_dataset.save_dir,
+			data_path=cfg.create_windows_dataset.path,
+			metric_path=cfg.create_windows_dataset.metric_path,
+			window_size=cfg.create_windows_dataset.window_size,
+			metric=cfg.create_windows_dataset.metric_for_labeling_windows,
 			mode='multivariate'
 		)
 

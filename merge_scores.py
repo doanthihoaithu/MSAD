@@ -91,7 +91,7 @@ def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_p
 
 	# Check if given metric exists
 	if metric.upper() not in metricsloader.get_names():
-		raise ValueError(f"Not recognizable metric {metric}. Please use one of {metricsloader.get_names()}")
+		raise ValueError(f'Not recognizable metric {metric}. Please use one of {metricsloader.get_names()}')
 
 	# Read accuracy table, fix filenames & indexing, remove detectors scores
 	acc_tables_path = os.path.join(mts_acc_tables_path, "mergedTable_AUC_PR.csv")
@@ -195,32 +195,37 @@ def merge_inference_times(path, save_path):
 	
 	# Save the file with name model_selectors_inference_time.csv in the results/execution_time dir
 	final_df.to_csv(os.path.join(save_path, f'current_inference_time.csv'), index=True)
-	print(final_df)
+	print(f'Successfully save merged inference times to {save_path}')
+	print(final_df.head())
 
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
 	print(f'Merge scores with configuration: {cfg}')
-	if cfg.merge_score_mts == False:
+	if cfg.merge_score.mts == False:
 		merge_scores(
-			path=cfg.merge_score_path,
-			metric=cfg.merge_score_metric,
+			path=cfg.merge_score.path,
+			metric=cfg.merge_score.metrics[0],
 			save_path=cfg.merge_score_save_path,
 		)
 	else:
-		merge_scores_mts(
-			path=cfg.merge_score_path,
-			metric=cfg.merge_score_metric,
-			save_path=cfg.merge_score_save_path,
-			mts_metrics_path=cfg.mts_metrics_path,
-			mts_acc_tables_path=cfg.mts_acc_tables_path,
-		)
+		metrics = cfg.merge_score.metrics
+		for m in metrics:
+			merge_scores_mts(
+				path=cfg.merge_score.raw_predictions_path,
+				metric=m,
+				save_path=cfg.merge_score.save_path,
+				mts_metrics_path=cfg.mts_current_metrics_path,
+				mts_acc_tables_path=cfg.mts_current_acc_tables_path,
+			)
+			print(f'Merge scores metrics for {m}')
 
 
-	if cfg.merge_score_time:
+	if cfg.merge_score.time:
 		merge_inference_times(
-			path=cfg.merge_score_path,
-			save_path=cfg.merge_score_save_path,
+			path=cfg.merge_score.raw_predictions_path,
+			save_path=cfg.merge_score.save_path,
 		)
+		print(f'Merge inference times for {cfg.merge_score.time}')
 
 if __name__ == "__main__":
 

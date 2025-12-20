@@ -133,11 +133,11 @@ def create_avg_ens_with_interpretability_for_mts(dataset, n_jobs=1):
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
 	print(f'Run AVG_ENS with config: {cfg}')
-	if 'mts' in cfg.run_avg_ens_dataset:
+	if 'mts' in cfg.run_avg_ens.dataset:
 		# create_avg_ens_for_mts(cfg.run_avg_ens_dataset, n_jobs=cfg.run_avg_ens_n_jobs)
-		create_avg_ens_with_interpretability_for_mts(cfg.run_avg_ens_dataset, n_jobs=cfg.run_avg_ens_n_jobs)
+		create_avg_ens_with_interpretability_for_mts(cfg.run_avg_ens.dataset, n_jobs=cfg.run_avg_ens.n_jobs)
 	else:
-		create_avg_ens(n_jobs=cfg.run_avg_ens_n_jobs)
+		create_avg_ens(n_jobs=cfg.run_avg_ens.n_jobs)
 
 if __name__ == "__main__":
 	# parser = argparse.ArgumentParser(

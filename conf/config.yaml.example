@@ -3,17 +3,78 @@ hydra:
     chdir: true  # to save objects in a working directory
   run:
     dir: .  # Disable Hydra's Directory Change
+  runtime:
+    version_base: '1.1'
+
 
 random:
   seed: 42
 
 
-mts_running_dataset: settings_two
-data_folder: data/mts/${mts_running_dataset}
-run_oracle_metric_path: ${data_folder}/metrics
-run_oracle_acc: 1
-run_oracle_randomness: 'true'
-run_oracle_eval: false
+mts_data_folder: data/mts
+mts_running_dataset: settings_one
+mts_working_folder: ${mts_data_folder}/${mts_running_dataset}
+mts_current_metrics_path: ${mts_working_folder}/metrics
+mts_current_acc_tables_path:  ${mts_working_folder}/acc_tables
+mts_current_data_path: ${mts_working_folder}/data
 
-run_avg_ens_dataset: mts/${mts_running_dataset}
-run_avg_ens_n_jobs: 4
+current_window_size: 32
+metric_for_labeling_windows: 'auc_pr' #Metric use to assign labels for MTS windowed.
+train_test_split_ratio: 0.5
+
+run_oracle:
+  metric_path: ${mts_current_metrics_path}
+  acc: 1
+  randomness: 'true'
+  eval: false
+
+run_avg_ens:
+  dataset: mts/${mts_running_dataset}
+  n_jobs: 4
+
+create_windows_dataset:
+  dataset_name: ${mts_running_dataset}
+  window_size: ${current_window_size}
+  metric_for_labeling_windows: ${metric_for_labeling_windows}
+  save_dir: ${mts_working_folder}
+  path: ${mts_current_data_path}
+  metric_path: ${mts_current_metrics_path}
+
+generate_features:
+  path: ${mts_working_folder}/${mts_running_dataset}_${current_window_size}
+
+model_selection:
+  window_size: ${current_window_size}
+  metric_for_labeling_windows: ${metric_for_labeling_windows}
+  rocket_config:
+    path: ${generate_features.path}
+    split_per: ${train_test_split_ratio}
+    file: ${generate_features.path}/supervised_splits/train_test_split.csv
+    eval: true
+    path_save: results/weights/supervised
+  feature_based_model_config:
+    classifier: 'all'
+    path: ${generate_features.path}/TSFRESH_${mts_running_dataset}_${current_window_size}.csv
+    split_per: ${train_test_split_ratio}
+    file: ${generate_features.path}/supervised_splits/train_test_split.csv
+    eval: true
+    path_save: results/weights
+  deep_model_config:
+    data_path: ${generate_features.path}
+    split_per: ${train_test_split_ratio}
+    seed: ${random.seed}
+    read_from_file: ${generate_features.path}/supervised_splits/train_test_split.csv
+    model_name: 'all'  #'all', 'resnet', 'convnet'
+    model_parameters_file: models/configuration/${model_selection.deep_model_config.model_name}_default.json
+    batch_size: 256
+    epochs: 100
+    eval_model: true
+
+merge_score:
+  mts: true
+  metrics: ['interpretability_log_score', 'interpretability_hit_2_score', 'vus_pr', 'auc_pr' ]
+# ['vus_roc', 'vus_pr', 'auc_roc', 'auc_pr', 'interpretability_log_score', 'interpretability_hit_2_score']
+  save_path: results_mts
+  raw_predictions_path: results/raw_predictions
+  time: true
+

@@ -15,6 +15,9 @@ import os
 from time import perf_counter
 import re
 from collections import Counter
+
+import hydra
+from omegaconf import DictConfig
 from tqdm import tqdm
 from datetime import datetime
 
@@ -146,35 +149,46 @@ def train_feature_based(data_path, classifier_name, split_per=0.7, seed=None, re
 			fnames=eval_set,
 		)
 
-
-if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-		prog='train_feature_based',
-		description='Script for training the traditional classifiers',
-	)
-	parser.add_argument('-p', '--path', type=str, help='path to the dataset to use', required=True)
-	parser.add_argument('-c', '--classifier', type=str, help='classifier to run', required=True)
-	parser.add_argument('-sp', '--split_per', type=float, help='split percentage for train and val sets', default=0.7)
-	parser.add_argument('-s', '--seed', type=int, help='seed for splitting train, val sets (use small number)', default=None)
-	parser.add_argument('-f', '--file', type=str, help='path to file that contains a specific split', default=None)
-	parser.add_argument('-e', '--eval-true', action="store_true", help='whether to evaluate the model on test data after training')
-	parser.add_argument('-ps', '--path_save', type=str, help='path to save the trained classifier', default="results/weights")
-
-	args = parser.parse_args()
-
+@hydra.main(config_path="conf", config_name="config.yaml")
+def main(cfg: DictConfig) -> None:
 	# Option to all classifiers
-	if args.classifier == 'all':
+	config = cfg.model_selection.feature_based_model_config
+	if config.classifier == 'all':
 		clf_list = list(classifiers.keys())
 	else:
-		clf_list = [args.classifier]
+		clf_list = [config.classifier]
 
 	for classifier in clf_list:
 		train_feature_based(
-			data_path=args.path,
+			data_path=config.path,
 			classifier_name=classifier,
-			split_per=args.split_per, 
-			seed=args.seed,
-			read_from_file=args.file,
-			eval_model=args.eval_true,
-			path_save=args.path_save
+			split_per=config.split_per,
+			seed=cfg.random.seed,
+			read_from_file=config.file,
+			eval_model=config.eval,
+			path_save=config.path_save
 		)
+
+if __name__ == "__main__":
+	# parser = argparse.ArgumentParser(
+	# 	prog='train_feature_based',
+	# 	description='Script for training the traditional classifiers',
+	# )
+	# parser.add_argument('-p', '--path', type=str, help='path to the dataset to use', required=True)
+	# parser.add_argument('-c', '--classifier', type=str, help='classifier to run', required=True)
+	# parser.add_argument('-sp', '--split_per', type=float, help='split percentage for train and val sets', default=0.7)
+	# parser.add_argument('-s', '--seed', type=int, help='seed for splitting train, val sets (use small number)', default=None)
+	# parser.add_argument('-f', '--file', type=str, help='path to file that contains a specific split', default=None)
+	# parser.add_argument('-e', '--eval-true', action="store_true", help='whether to evaluate the model on test data after training')
+	# parser.add_argument('-ps', '--path_save', type=str, help='path to save the trained classifier', default="results/weights")
+	#
+	# args = parser.parse_args()
+	#--path=data/mts/settings_two/settings_two_32/TSFRESH_settings_two_32.csv
+	# --classifier=knn
+	# --split_per=0.5
+	# --file=data/mts/settings_two/settings_two_32/supervised_splits/train_test_split.csv
+	# --eval-true
+	# --path_save=results/weights/
+
+	main()
+

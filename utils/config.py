@@ -55,7 +55,9 @@ multivariate_detector_names = [
 	'COPOD',
 	'HBOS',
 	'LOF',
-	'PCC'
+	'PCC',
+	'AutoEncoder (AE)',
+	'DenoisingAutoEncoder (DAE)'
 ]
 
 
