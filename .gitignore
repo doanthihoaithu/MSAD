@@ -119,3 +119,7 @@ ENV/
 
 data/mts
 .hydra
+results_mts/runs
+results_mts/done_training
+results_mts/raw_predictions
+results_mts/weights

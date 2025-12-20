@@ -60,8 +60,12 @@ classifiers = {
 }
 
 
-def train_feature_based(data_path, classifier_name, split_per=0.7, seed=None, read_from_file=None, eval_model=False, path_save=None):
+def train_feature_based(data_path, classifier_name, split_per=0.7, seed=None, read_from_file=None, eval_model=False,
+						path_model_save=None, save_done_training=None, path_prediction_save= None):
 	# Set up
+	os.makedirs(path_model_save, exist_ok=True)
+	os.makedirs(save_done_training, exist_ok=True)
+	os.makedirs(path_prediction_save, exist_ok=True)
 	window_size = int(re.search(r'\d+', data_path).group())
 	training_stats = {}
 	original_dataset = data_path.split('/')[:-1]
@@ -135,17 +139,24 @@ def train_feature_based(data_path, classifier_name, split_per=0.7, seed=None, re
 	df.to_csv(os.path.join(save_done_training, f"{classifier_name}_{timestamp}.csv"))
 
 	# Save pipeline
-	saving_dir = os.path.join(path_save, classifier_name) if classifier_name.lower() not in path_save.lower() else path_save
+	saving_dir = os.path.join(path_model_save, classifier_name) if classifier_name.lower() not in path_model_save.lower() else path_model_save
 	saved_model_path = save_classifier(classifier, saving_dir, fname=None)
 
 	# Evaluate on test set or val set
 	if eval_model:
 		eval_set = test_indexes if len(test_indexes) > 0 else val_indexes
+		# eval_feature_based(
+		# 	data_path=data_path,
+		# 	model_name=classifier_name,
+		# 	model_path=saved_model_path,
+		# 	path_save=path_save_results,
+		# 	fnames=eval_set,
+		# )
 		eval_feature_based(
-			data_path=data_path, 
+			data_path=data_path,
 			model_name=classifier_name,
 			model_path=saved_model_path,
-			path_save=path_save_results,
+			path_save=path_prediction_save,
 			fnames=eval_set,
 		)
 
@@ -166,7 +177,9 @@ def main(cfg: DictConfig) -> None:
 			seed=cfg.random.seed,
 			read_from_file=config.file,
 			eval_model=config.eval,
-			path_save=config.path_save
+			path_model_save=config.path_model_save,
+			save_done_training=config.save_done_training,
+			path_prediction_save=config.path_prediction_save
 		)
 
 if __name__ == "__main__":

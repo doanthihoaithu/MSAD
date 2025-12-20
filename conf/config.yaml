@@ -17,6 +17,10 @@ mts_working_folder: ${mts_data_folder}/${mts_running_dataset}
 mts_current_metrics_path: ${mts_working_folder}/metrics
 mts_current_acc_tables_path:  ${mts_working_folder}/acc_tables
 mts_current_data_path: ${mts_working_folder}/data
+mts_save_done_training_dir: results_mts/done_training/${mts_running_dataset}
+mts_raw_predictions_dir: results_mts/raw_predictions/${mts_running_dataset}
+mts_model_weights_dir: results_mts/weights/${mts_running_dataset}
+mts_runs_dir: results_mts/runs/${mts_running_dataset}
 
 current_window_size: 32
 metric_for_labeling_windows: 'auc_pr' #Metric use to assign labels for MTS windowed.
@@ -51,14 +55,18 @@ model_selection:
     split_per: ${train_test_split_ratio}
     file: ${generate_features.path}/supervised_splits/train_test_split.csv
     eval: true
-    path_save: results/weights/supervised
+    path_model_save: ${mts_model_weights_dir}/supervised
+    save_done_training: ${mts_save_done_training_dir}
+    path_prediction_save: ${mts_raw_predictions_dir}
   feature_based_model_config:
     classifier: 'all'
     path: ${generate_features.path}/TSFRESH_${mts_running_dataset}_${current_window_size}.csv
     split_per: ${train_test_split_ratio}
     file: ${generate_features.path}/supervised_splits/train_test_split.csv
     eval: true
-    path_save: results/weights
+    path_model_save: ${mts_model_weights_dir}
+    save_done_training: ${mts_save_done_training_dir}
+    path_prediction_save: ${mts_raw_predictions_dir}
   deep_model_config:
     data_path: ${generate_features.path}
     split_per: ${train_test_split_ratio}
@@ -69,12 +77,16 @@ model_selection:
     batch_size: 256
     epochs: 100
     eval_model: true
+    path_model_save: ${mts_model_weights_dir}
+    save_done_training: ${mts_save_done_training_dir}
+    path_prediction_save: ${mts_raw_predictions_dir}
+    path_save_runs:  ${mts_runs_dir}
 
 merge_score:
   mts: true
   metrics: ['interpretability_log_score', 'interpretability_hit_2_score', 'vus_pr', 'auc_pr' ]
 # ['vus_roc', 'vus_pr', 'auc_roc', 'auc_pr', 'interpretability_log_score', 'interpretability_hit_2_score']
-  save_path: results_mts
-  raw_predictions_path: results/raw_predictions
+  save_path: results_mts/merged_scores/${mts_running_dataset}
+  raw_predictions_path: results_mts/raw_predictions/${mts_running_dataset}
   time: true
 

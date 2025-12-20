@@ -41,14 +41,26 @@ def train_deep_model(
 	batch_size,
 	model_parameters_file,
 	epochs,
-	eval_model=False
+	eval_model=False,
+	path_model_save=None,
+	save_done_training=None,
+	path_prediction_save=None,
+	path_save_runs= None
 ):
+	os.makedirs(path_model_save, exist_ok=True)
+	os.makedirs(path_prediction_save, exist_ok=True)
+	os.makedirs(path_save_runs, exist_ok=True)
+	os.makedirs(save_done_training, exist_ok=True)
 
 	# Set up
 	window_size = int(re.search(r'\d+', str(data_path)).group())
+	# data_path example: 'data/mts/settings_one/settings_one_32'
+	working_dataset = '_'.join(str(data_path).split('/')[-1].split('_')[:-1])
 	device = 'cuda'
-	save_runs = 'results/runs/'
-	save_weights = 'results/weights/'
+	# save_runs = f'results/runs/{working_dataset}'
+	# save_weights = f'results/weights/{working_dataset}'
+	save_runs = path_save_runs
+	save_weights = path_model_save
 	inf_time = True 		# compute inference time per timeseries
 
 	# Load the splits
@@ -120,7 +132,7 @@ def train_deep_model(
 	# Evaluate on test set or val set
 	if eval_model:
 		if read_from_file is not None and "unsupervised" in read_from_file:
-			os.path.join(path_save_results, "unsupervised")
+			os.path.join(path_prediction_save, "unsupervised")
 		eval_set = test_set if len(test_set) > 0 else val_set
 		# TODO fix hardcode
 		eval_deep_model(
@@ -128,7 +140,7 @@ def train_deep_model(
 			fnames=eval_set,
 			model_name=model_name,
 			model=model,
-			path_save=path_save_results,
+			path_save=path_prediction_save,
 		)
 
 @hydra.main(config_path="conf", config_name="config.yaml")
@@ -147,7 +159,11 @@ def main(cfg: DictConfig) -> None:
 				model_parameters_file=model_parameters_file,
 				batch_size=train_deep_model_config.batch_size,
 				epochs=train_deep_model_config.epochs,
-				eval_model=train_deep_model_config.eval_model
+				eval_model=train_deep_model_config.eval_model,
+				path_model_save=train_deep_model_config.path_model_save,
+				save_done_training=train_deep_model_config.save_done_training,
+				path_prediction_save=train_deep_model_config.path_prediction_save,
+				path_save_runs = train_deep_model_config.path_save_runs,
 			)
 	else:
 		train_deep_model(
@@ -159,7 +175,11 @@ def main(cfg: DictConfig) -> None:
 			model_parameters_file=train_deep_model_config.model_parameters_file,
 			batch_size=train_deep_model_config.batch_size,
 			epochs=train_deep_model_config.epochs,
-			eval_model=train_deep_model_config.eval_model
+			eval_model=train_deep_model_config.eval_model,
+			path_model_save=train_deep_model_config.path_model_save,
+			save_done_training=train_deep_model_config.save_done_training,
+			path_prediction_save=train_deep_model_config.path_prediction_save,
+			path_save_runs = train_deep_model_config.path_save_runs,
 		)
 
 if __name__ == "__main__":

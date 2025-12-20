@@ -146,6 +146,7 @@ def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_p
 	[print(i, x) for i, x in enumerate(indexes_not_found)]
 
 	# Save the final dataframe
+	os.makedirs(save_path, exist_ok=True)
 	final_df.to_csv(os.path.join(save_path, f'current_accuracy_{metric.upper()}.csv'), index=True)
 	print(final_df)
 
