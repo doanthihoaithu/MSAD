@@ -226,7 +226,7 @@ def main(cfg: DictConfig) -> None:
 			path=cfg.merge_score.raw_predictions_path,
 			save_path=cfg.merge_score.save_path,
 		)
-		print(f'Merge inference times for {cfg.merge_score.time}')
+		print(f'Merge inference times to  {cfg.merge_score.save_path}')
 
 if __name__ == "__main__":
 
