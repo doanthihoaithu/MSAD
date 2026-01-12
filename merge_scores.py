@@ -103,7 +103,9 @@ def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_p
 
 	# Read detectors and oracles scores
 	metric_scores = metricsloader.read(metric.upper())
-
+	refactor_indexes = metric_scores.index.str.split('/')
+	refactor_indexes = ['/'.join(f[-2:]) for f in refactor_indexes]
+	metric_scores.index = refactor_indexes
 	# Read classifiers predictions, and add scores
 	df = None
 	scores_files = [x for x in os.listdir(path) if '.csv' in x]
@@ -129,6 +131,9 @@ def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_p
 
 	# Add true labels from AUC_PR metrics
 	auc_pr_detectors_scores = metricsloader.read('AUC_PR')[multivariate_detector_names]
+	refactor_indexes = auc_pr_detectors_scores.index.str.split('/')
+	refactor_indexes = ['/'.join(f[-2:]) for f in refactor_indexes]
+	auc_pr_detectors_scores.index = refactor_indexes
 	labels = auc_pr_detectors_scores.idxmax(axis=1).to_frame(name='label')
 	df = pd.merge(labels, df, left_index=True, right_index=True)
 

@@ -147,10 +147,10 @@ def train_deep_model(
 def main(cfg: DictConfig) -> None:
 	train_deep_model_config = cfg.model_selection.deep_model_config
 	if train_deep_model_config.model_name == 'all':
-		for model_name in ['resnet','convnet', 'inception_time' ]:
+		for model_name in ['sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']:
+			model_parameters_file = train_deep_model_config.model_parameters_file.replace('all_default.json', f'{model_name}.json')
+
 			if cfg.run_all_windows == False:
-				model_parameters_file = train_deep_model_config.model_parameters_file.replace('all_default.json',
-																							  f'{model_name}_default.json')
 				train_deep_model(
 					data_path=train_deep_model_config.data_path,
 					split_per=train_deep_model_config.split_per,
@@ -169,9 +169,6 @@ def main(cfg: DictConfig) -> None:
 			else:
 				window_sizes = cfg.supported_window_sizes
 				for window_size in window_sizes:
-					model_parameters_file = train_deep_model_config.model_parameters_file.replace('all_default.json',
-																								  f'{model_name}_default.json')
-
 					print(f'\n\n\nTraining model: {model_name} for window size: {window_size}\n\n\n')
 					data_path = train_deep_model_config.data_path_template.format(current_window_size=window_size)
 					split_file = train_deep_model_config.read_from_file_template.format(current_window_size=window_size)
@@ -190,7 +187,6 @@ def main(cfg: DictConfig) -> None:
 						path_prediction_save=train_deep_model_config.path_prediction_save,
 						path_save_runs=train_deep_model_config.path_save_runs,
 					)
-
 	else:
 		train_deep_model(
 			data_path=train_deep_model_config.data_path,

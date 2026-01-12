@@ -283,9 +283,9 @@ class ModelExecutioner:
 			print("----------------------------------------------------------------")
 			print("Is there a GPU available: {}".format(torch.cuda.is_available()))
 			print("Number of allocated devices: {}".format(torch.cuda.device_count()))
-			curr_device_id = torch.cuda.current_device()
+			curr_device_id = torch.cuda.current_device() if torch.cuda.is_available() else 'mps:0' if torch.backends.mps.is_available() else 'cpu:0'
 			print("Index of current device: {}".format(curr_device_id))
-			print("Name of current divice: '{}'".format(torch.cuda.get_device_name(curr_device_id)))
+			print("Name of current divice: '{}'".format(torch.cuda.get_device_name(curr_device_id) if torch.cuda.is_available() else 'Apple Silicon GPU' if torch.backends.mps.is_available() else 'CPU'))
 			print("Memory allocated:", round(torch.cuda.memory_allocated(curr_device_id)/1024**3, 3), 'GB')
 			print("Memory cached:   ", round(torch.cuda.memory_reserved(curr_device_id)/1024**3, 3), 'GB')
 			print("----------------------------------------------------------------")

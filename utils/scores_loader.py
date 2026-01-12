@@ -72,7 +72,7 @@ class ScoresLoader:
 		idx_failed = []
 
 		for i, name in enumerate(tqdm(file_names, desc='Loading scores')):
-			name_split = name.split('/')[-2:]
+			name_split = name.split('/')[-3:]
 			paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', name_split[1]) for detector in detectors]
 			data = []
 			try:
@@ -92,7 +92,7 @@ class ScoresLoader:
 
 		return scores, idx_failed
 
-	def load_multivariate_score_distribution(self, file_names):
+	def load_multivariate_score_per_var(self, file_names):
 		'''
 		Load the score for the specified files/timeseries. If a time series has no score for all
 		the detectors (e.g. the anomaly score has been computed for 10/12 detectors) the this
@@ -106,27 +106,27 @@ class ScoresLoader:
 		detectors = self.get_detector_names()
 		scores = []
 		idx_failed = []
-		distribution_scores = []
+		per_var_scores = []
 		for i, name in enumerate(tqdm(file_names, desc='Loading scores')):
 			name_split = name.split('/')[-2:]
 			paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', name_split[1]) for detector in detectors]
-			score_distribution_paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', f'{name_split[1]}.score_distribution') for detector in
+			score_per_var_paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', f'{name_split[1]}.scores_per_var') for detector in
 					 detectors]
 			data = []
-			score_distribution_data = []
+			score_per_var_data = []
 			try:
-				for path, score_distribution_path in zip(paths, score_distribution_paths):
+				for path, score_per_var_path in zip(paths, score_per_var_paths):
 					data.append(pd.read_csv(path, header=None).to_numpy())
-					score_distribution = pd.read_csv(score_distribution_path, header=None).to_numpy()
-					assert score_distribution.ndim == 2
-					score_distribution = score_distribution/score_distribution.sum(axis=1, keepdims=True)
-					score_distribution_data.append(score_distribution)
+					score_per_var = pd.read_csv(score_per_var_path, header=None).to_numpy()
+					assert score_per_var.ndim == 2
+					# score_per_var = score_per_var/score_per_var.sum(axis=1, keepdims=True)
+					score_per_var_data.append(score_per_var)
 
 			except Exception as e:
 				idx_failed.append(i)
 				continue
 			scores.append(np.concatenate(data, axis=1))
-			distribution_scores.append(np.stack(score_distribution_data, axis=1))
+			per_var_scores.append(np.stack(score_per_var_data, axis=1))
 
 		# Delete ts which failed to load
 		if len(idx_failed) > 0:
@@ -135,7 +135,7 @@ class ScoresLoader:
 				print('\t\'{}\''.format(file_names[idx]))
 				# del file_names[idx]
 
-		return scores, distribution_scores, idx_failed
+		return scores, per_var_scores, idx_failed
 
 	def write(self, file_names, detector, score, metric):
 		'''Write some scores for a specific detector

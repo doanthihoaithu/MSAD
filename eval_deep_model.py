@@ -144,7 +144,7 @@ def eval_deep_model(
 		data_path=data_path,
 		batch_size=batch_size,
 		deep_model=True,
-		device='cuda' if torch.cuda.is_available() else 'cpu',
+		device='cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu',
 	)
 	results = results.sort_index()
 	results.columns = [f"{classifier_name}_{x}" for x in results.columns.values]

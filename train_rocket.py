@@ -163,16 +163,34 @@ def run_rocket(data_path, split_per=0.7, seed=None, read_from_file=None, eval_mo
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
 	rocket_config = cfg.model_selection.rocket_config
-	run_rocket(
-		data_path=rocket_config.path,
-		split_per=rocket_config.split_per,
-		seed=cfg.random.seed,
-		read_from_file=rocket_config.file,
-		eval_model=rocket_config.eval,
-		path_model_save=rocket_config.path_model_save,
-		save_done_training=rocket_config.save_done_training,
-		path_prediction_save=rocket_config.path_prediction_save
-	)
+	run_all_windows = cfg.run_all_windows
+	if run_all_windows == False:
+		run_rocket(
+			data_path=rocket_config.path,
+			split_per=rocket_config.split_per,
+			seed=cfg.random.seed,
+			read_from_file=rocket_config.file,
+			eval_model=rocket_config.eval,
+			path_model_save=rocket_config.path_model_save,
+			save_done_training=rocket_config.save_done_training,
+			path_prediction_save=rocket_config.path_prediction_save
+		)
+	else:
+		window_sizes = cfg.supported_window_sizes
+		for window_size in window_sizes:
+			print(f'\n\nRunning Rocket for window size: {window_size}\n')
+			path = rocket_config.path_template.format(current_window_size=window_size)
+			file = rocket_config.file_template.format(current_window_size=window_size)
+			run_rocket(
+				data_path=path,
+				split_per=rocket_config.split_per,
+				seed=cfg.random.seed,
+				read_from_file=file,
+				eval_model=rocket_config.eval,
+				path_model_save=rocket_config.path_model_save,
+				save_done_training=rocket_config.save_done_training,
+				path_prediction_save=rocket_config.path_prediction_save
+			)
 
 if __name__ == "__main__":
 	# parser = argparse.ArgumentParser(

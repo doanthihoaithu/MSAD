@@ -16,6 +16,7 @@ import re
 import os
 
 from omegaconf import DictConfig
+from tqdm import tqdm
 
 from utils.data_loader import DataLoader
 
@@ -65,9 +66,17 @@ def generate_features(path):
 
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
-	generate_features(
-		path=cfg.generate_features.path,
-	)
+	if cfg.generate_features.mode == "single":
+		generate_features(
+			path=cfg.generate_features.path,
+		)
+	else:
+		window_sizes = cfg.generate_features.window_sizes
+		for window_size in tqdm(window_sizes, desc="Generating features for different window sizes", total=len(window_sizes)):
+			path = cfg.generate_features.path_template.format(current_window_size=window_size)
+			generate_features(
+				path=path,
+			)
 
 
 if __name__ == "__main__":

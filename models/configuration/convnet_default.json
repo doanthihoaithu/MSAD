@@ -4,5 +4,5 @@
 	"kernel_size":3,
 	"padding":1,
 	"original_dim":6,
-	"num_classes":8
+	"num_classes":10
 }

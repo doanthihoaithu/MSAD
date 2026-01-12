@@ -208,7 +208,7 @@ def split_ts(data, window_size):
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
 	if cfg.create_windows_dataset.window_size == "all":
-		window_sizes = [16, 32, 64, 128, 256, 512, 768, 1024]
+		window_sizes = [16, 24, 32, 64, 128, 256, 512]
 
 		for size in window_sizes:
 			create_tmp_dataset(

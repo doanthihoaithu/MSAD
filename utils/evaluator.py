@@ -104,8 +104,8 @@ class Evaluator:
 
 		for (inputs, labels) in val_loader:
 			# Move data to the same device as model
-			inputs = inputs.to(device)
-			labels = labels.to(device)
+			inputs = inputs.type(torch.float32).to(device)
+			labels = labels.type(torch.float32).to(device)
 
 			# Make predictions
 			outputs = model(inputs.float())

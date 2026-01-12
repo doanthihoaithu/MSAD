@@ -72,14 +72,16 @@ class DataLoader:
 						x.append(curr_data[:, 0])
 						y.append(curr_data[:, 1])
 						# Remove path from file name, keep dataset, time series name
-						fname = '/'.join(fname.split('/')[-2:])
+						# TODO fix hardcoded 'custom'
+						fname = '/'.join(['custom'] + fname.split('/')[-2:])
 						fnames.append(fname.replace(self.data_path, ''))
 				else:
 					if not np.all(curr_data[0, 1] == curr_data[:, 1]):
 						x.append(curr_data[:, :-1])
 						y.append(curr_data[:, -1])
 						# Remove path from file name, keep dataset, time series name
-						fname = '/'.join(fname.split('/')[-2:])
+						# TODO fix hardcoded 'custom'
+						fname = '/'.join(['custom'] + fname.split('/')[-2:])
 						fnames.append(fname.replace(self.data_path, ''))
 					
 		return x, y, fnames
@@ -130,8 +132,8 @@ class DataLoader:
 						multivariate_x.append(curr_data[:, :-1])
 						y.append(curr_data[:, -1])
 						multivariate_y.append(curr_multivariate_label_data)
-						# Remove path from file name, keep dataset, time series name
-						fname = '/'.join(fname.split('/')[-2:])
+						# Remove path from file name, keep collection, dataset, time series name
+						fname = '/'.join(['custom'] + fname.split('/')[-2:])
 						fnames.append(fname.replace(self.data_path, ''))
 
 		return multivariate_x, y, multivariate_y, fnames

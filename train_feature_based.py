@@ -169,18 +169,38 @@ def main(cfg: DictConfig) -> None:
 	else:
 		clf_list = [config.classifier]
 
-	for classifier in clf_list:
-		train_feature_based(
-			data_path=config.path,
-			classifier_name=classifier,
-			split_per=config.split_per,
-			seed=cfg.random.seed,
-			read_from_file=config.file,
-			eval_model=config.eval,
-			path_model_save=config.path_model_save,
-			save_done_training=config.save_done_training,
-			path_prediction_save=config.path_prediction_save
-		)
+	if cfg.run_all_windows == False:
+
+		for classifier in clf_list:
+			train_feature_based(
+				data_path=config.path,
+				classifier_name=classifier,
+				split_per=config.split_per,
+				seed=cfg.random.seed,
+				read_from_file=config.file,
+				eval_model=config.eval,
+				path_model_save=config.path_model_save,
+				save_done_training=config.save_done_training,
+				path_prediction_save=config.path_prediction_save
+			)
+	else:
+		window_sizes = cfg.supported_window_sizes
+		for window_size in window_sizes:
+			print(f'\n\nRunning Feature-Based Classifiers for window size: {window_size}\n')
+			path = config.path_template.format(current_window_size=window_size)
+			file = config.file_template.format(current_window_size=window_size)
+			for classifier in clf_list:
+				train_feature_based(
+					data_path=path,
+					classifier_name=classifier,
+					split_per=config.split_per,
+					seed=cfg.random.seed,
+					read_from_file=file,
+					eval_model=config.eval,
+					path_model_save=config.path_model_save,
+					save_done_training=config.save_done_training,
+					path_prediction_save=config.path_prediction_save
+				)
 
 if __name__ == "__main__":
 	# parser = argparse.ArgumentParser(

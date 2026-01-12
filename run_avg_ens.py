@@ -114,7 +114,7 @@ def create_avg_ens_with_interpretability_for_mts(dataset, n_jobs=1):
 
 	# Load scores
 	scoresloader = ScoresLoader(mts_scores_path)
-	scores, contribution_scores, idx_failed = scoresloader.load_multivariate_score_distribution(fnames)
+	scores, per_var_scores, idx_failed = scoresloader.load_multivariate_score_per_var(fnames)
 
 	# Remove failed idxs
 	if len(idx_failed) > 0:
@@ -126,7 +126,7 @@ def create_avg_ens_with_interpretability_for_mts(dataset, n_jobs=1):
 
 	# Create Avg_ens
 	avg_ens = Avg_ens()
-	metric_values = avg_ens.fit_interpretability(y, scores, multivariate_y, contribution_scores, metrics, n_jobs=n_jobs)
+	metric_values = avg_ens.fit_interpretability(y, scores, multivariate_y, per_var_scores, metrics, n_jobs=n_jobs)
 	for metric in metrics:
 		# Write metric values for avg_ens
 		metricsloader.write(metric_values[metric], fnames, 'AVG_ENS', metric)

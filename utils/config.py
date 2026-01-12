@@ -56,6 +56,8 @@ multivariate_detector_names = [
 	'HBOS',
 	'LOF',
 	'PCC',
+	'Torsk',
+	'Random Black Forest (RR)',
 	'AutoEncoder (AE)',
 	'DenoisingAutoEncoder (DAE)'
 ]
@@ -68,4 +70,8 @@ deep_models = {
 	'inception':InceptionModel,
 	'resnet':ResNetBaseline,
 	'sit':SignalTransformer,
+	'sit_conv_patch':SignalTransformer,
+	'sit_linear_patch':SignalTransformer,
+	'sit_stem_original':SignalTransformer,
+	'sit_stem_relu':SignalTransformer,
 }

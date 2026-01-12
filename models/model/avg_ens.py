@@ -61,13 +61,13 @@ class Avg_ens:
 
 		return metric_values_dict
 
-	def fit_interpretability(self, y, scores,  multivariate_labels, multivariate_distribution_scores, metrics, n_jobs=1):
+	def fit_interpretability(self, y, scores, multivariate_labels, multivariate_per_var_scores, metrics, n_jobs=1):
 		'''Computes all metrics for the Average Ensemble model. If both VUS_ROC
 		and VUS_PR are requested a trick is done to compute them in parallel
 		and save time.
 
 		:param multivariate_labels: anomaly labels of the timeseries to compute
-		:param multivariate_distribution_scores: the already computed scores of the different detectors
+		:param multivariate_per_var_scores: the already computed scores of the different detectors
 		:param metrics: metrics to compute (['AUC_ROC', 'AUC_PR', 'VUS_ROC', 'VUS_PR'])
 		:param n_jobs: Threads to use in parallel to compute the metrics faster
 		:return metric_values_dict: a dictionary with all the computed metrics
@@ -77,9 +77,13 @@ class Avg_ens:
 		metric = copy.deepcopy(metrics)
 
 		# Average the detectors' scores for every timeserie
-		for score, distribution_score in zip(scores, multivariate_distribution_scores):
-			avg_ens_scores.append(np.average(score, axis=1))
-			avg_ens_distribution_scores.append(np.average(distribution_score, axis=1))
+		for score, per_var_score in zip(scores, multivariate_per_var_scores):
+			avg_ens_score = np.average(score, axis=1)
+			avg_ens_score[np.isnan(avg_ens_score)] = 0
+			avg_ens_scores.append(avg_ens_score)
+			per_var_score = np.average(per_var_score, axis=1)
+			per_var_score[np.isnan(per_var_score)] = 0
+			avg_ens_distribution_scores.append(per_var_score)
 
 		# Create a scoresloader object
 		scoresloader = ScoresLoader(scores_path='DUMMYPATH')
@@ -103,9 +107,11 @@ class Avg_ens:
 					metric_values_dict[m] = metric_values[:, i]
 			else:
 				if not curr_metric.lower().startswith('interpretability'):
+					# avg_ens_scores[np.isnan(avg_ens_scores)] = 0
 					metric_values = scoresloader.compute_metric(y, avg_ens_scores, metric=curr_metric, n_jobs=n_jobs)
 					metric_values_dict[curr_metric] = metric_values
 				else:
+					# avg_ens_distribution_scores[np.isnan(avg_ens_distribution_scores)] = 0
 					metric_values = scoresloader.compute_interpretability_metric(multivariate_labels, avg_ens_distribution_scores, metric=curr_metric, n_jobs=n_jobs)
 					metric_values_dict[curr_metric] = metric_values
 		return metric_values_dict
