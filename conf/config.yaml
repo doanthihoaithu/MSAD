@@ -10,10 +10,9 @@ hydra:
 random:
   seed: 42
 
-mts_supported_detectors: ['CBLOF', 'RobustPCA', 'COPOD', 'HBOS', 'LOF', 'PCC', 'Torsk', 'Random Black Forest (RR)', 'AutoEncoder (AE)' ,'DenoisingAutoEncoder (DAE)']
 
 mts_data_folder: data/mts
-mts_running_dataset: settings_five
+mts_running_dataset: settings_three
 mts_working_folder: ${mts_data_folder}/${mts_running_dataset}
 mts_current_metrics_path: ${mts_working_folder}/metrics
 mts_current_acc_tables_path:  ${mts_working_folder}/acc_tables
@@ -23,8 +22,8 @@ mts_raw_predictions_dir: results_mts/raw_predictions/${mts_running_dataset}
 mts_model_weights_dir: results_mts/weights/${mts_running_dataset}
 mts_runs_dir: results_mts/runs/${mts_running_dataset}
 
-current_window_size: 16
-supported_window_sizes: [4, 8, 16, 32] # 64, 128, 256
+current_window_size: 32
+supported_window_sizes: [16, 32, 64, 128]
 metric_for_labeling_windows: 'auc_pr' #Metric use to assign labels for MTS windowed.
 train_test_split_ratio: 0.5
 run_all_windows: True
@@ -87,7 +86,7 @@ model_selection:
     model_name: 'all'  #'all', 'resnet', 'convnet'
     model_parameters_file: models/configuration/${model_selection.deep_model_config.model_name}_default.json
     batch_size: 256
-    epochs: 50
+    epochs: 100
     eval_model: true
     path_model_save: ${mts_model_weights_dir}
     save_done_training: ${mts_save_done_training_dir}
