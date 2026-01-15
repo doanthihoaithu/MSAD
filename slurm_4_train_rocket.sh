@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=train_rocket
 #SBATCH --nodes=1 # 1 node
-#SBATCH --ntasks-per-node=32 # 32 tasks per node
+#SBATCH --ntasks-per-node=16 # 32 tasks per node
 #SBATCH --time=24:00:00 # time limits: 1 hour
 #SBATCH --error=slurm_logs/train_rocket.err # standard error file
 #SBATCH --output=slurm_logs/train_rocket.out # standard output file
