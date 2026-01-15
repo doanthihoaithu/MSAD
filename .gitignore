@@ -1,3 +1,5 @@
+slurm_logs/
+
 # Project specific
 /data/TSB*/
 /results/weights/*
