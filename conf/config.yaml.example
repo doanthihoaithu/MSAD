@@ -12,7 +12,7 @@ random:
 
 
 mts_data_folder: data/mts
-mts_running_dataset: settings_three
+mts_running_dataset: settings_five
 mts_working_folder: ${mts_data_folder}/${mts_running_dataset}
 mts_current_metrics_path: ${mts_working_folder}/metrics
 mts_current_acc_tables_path:  ${mts_working_folder}/acc_tables
@@ -27,6 +27,8 @@ supported_window_sizes: [16, 32, 64, 128]
 metric_for_labeling_windows: 'auc_pr' #Metric use to assign labels for MTS windowed.
 train_test_split_ratio: 0.5
 run_all_windows: True
+mts_supported_detectors: ['CBLOF', 'RobustPCA', 'COPOD', 'HBOS', 'LOF', 'PCC', 'Torsk', 'Random Black Forest (RR)', 'AutoEncoder (AE)' ,'DenoisingAutoEncoder (DAE)']
+
 
 run_oracle:
   metric_path: ${mts_current_metrics_path}
