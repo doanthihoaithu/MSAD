@@ -51,7 +51,8 @@ univariate_detector_names = [
 
 multivariate_detector_names = [
     'CBLOF',
-	'COF',
+	# 'COF',
+	'RobustPCA',
 	'COPOD',
 	'HBOS',
 	'LOF',

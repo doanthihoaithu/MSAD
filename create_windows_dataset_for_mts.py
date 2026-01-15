@@ -200,7 +200,16 @@ def split_ts(data, window_size):
 
 			if data_split.ndim == 3:
 				k, window_size, n_features = data_split.shape
+				data_split = data_split.reshape(k, window_size * n_features)
+			else:
+				data_split = data_split
+	else:
+		data_split = np.asarray(data_split)
+		if data_split.ndim == 3:
+			k, window_size, n_features = data_split.shape
 			data_split = data_split.reshape(k, window_size * n_features)
+		else:
+			data_split = data_split
 
 	return data_split
 
@@ -208,7 +217,7 @@ def split_ts(data, window_size):
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
 	if cfg.create_windows_dataset.window_size == "all":
-		window_sizes = [16, 24, 32, 64, 128, 256, 512]
+		window_sizes = cfg.supported_window_sizes
 
 		for size in window_sizes:
 			create_tmp_dataset(

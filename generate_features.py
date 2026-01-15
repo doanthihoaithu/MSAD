@@ -49,7 +49,7 @@ def generate_features(path):
 
 	# Setup the TSFresh feature extractor (too costly to use any other parameter)
 	fe = TSFreshFeatureExtractor(
-		default_fc_parameters="minimal", 
+		default_fc_parameters="minimal",  # 'minimal' or 'efficient' or 'comprehensive'
 		show_warnings=False, 
 		n_jobs=-1
 	)
