@@ -125,3 +125,4 @@ results_mts/done_training
 results_mts/raw_predictions
 results_mts/weights
 conf/config.yaml
+data
