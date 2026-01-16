@@ -18,6 +18,12 @@ def train_test_split_customized(filenames, labels, dataset, data_dir, train_rati
     train_filenames, test_filenames, train_labels, test_labels = train_test_split(filenames, labels, train_size=train_ratio)
     print(f'Train set size: {len(train_filenames)}, Test set size: {len(test_filenames)}')
     print(f'Unique labels in train set: {len(set(train_labels))}, Unique labels in test set: {len(set(test_labels))}')
+    while len(set(train_labels)) < len(set(test_labels)):
+        train_filenames, test_filenames, train_labels, test_labels = train_test_split(filenames, labels,
+                                                                                      train_size=train_ratio)
+        print(f'Train set size: {len(train_filenames)}, Test set size: {len(test_filenames)}')
+        print(
+            f'Unique labels in train set: {len(set(train_labels))}, Unique labels in test set: {len(set(test_labels))}')
 
     train_filenames_df = pd.DataFrame(train_filenames, columns=['train_set'])
     test_filenames_df = pd.DataFrame(test_filenames, columns=['val_set'])
