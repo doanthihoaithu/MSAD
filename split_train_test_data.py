@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from utils.utils import get_project_root
 
 
-def train_test_split_customized(filenames, labels, dataset, data_dir, window_sizes, train_ratio=0.6):
+def train_test_split_customized(filenames, labels, dataset, data_dir, train_ratio=0.6):
     filenames = ["/".join(f.split('/')[-2:]) for f in filenames]
     # np.random.shuffle(filenames)
     # split_index = int(len(filenames) * train_ratio)
@@ -23,12 +23,12 @@ def train_test_split_customized(filenames, labels, dataset, data_dir, window_siz
     test_filenames_df = pd.DataFrame(test_filenames, columns=['val_set'])
     combined_df = pd.concat([train_filenames_df, test_filenames_df], axis=1, ignore_index=False).T
     combined_df.columns = [f'C{i}' for i in range(combined_df.shape[1])]
-    for window_size in window_sizes:
-        save_dir = os.path.join(os.path.dirname(data_dir), f'{dataset}_{window_size}','supervised_splits')
-        os.makedirs(save_dir, exist_ok=True)
-        save_file = os.path.join(save_dir,'train_test_split.csv')
-        combined_df.to_csv(save_file, header=True, index=True)
-        print("Saved train-test split to:", save_file)
+    # for window_size in window_sizes:
+    save_dir = os.path.join(os.path.dirname(data_dir), 'supervised_splits')
+    os.makedirs(save_dir, exist_ok=True)
+    save_file = os.path.join(save_dir,'train_test_split.csv')
+    combined_df.to_csv(save_file, header=True, index=True)
+    print("Saved train-test split to:", save_file)
 
 @hydra.main(config_path="./conf", config_name="config.yaml")
 def main(config: DictConfig):
@@ -41,7 +41,6 @@ def main(config: DictConfig):
     metrics_dir = config.mts_current_metrics_path
     mts_supported_detectors = config.mts_supported_detectors
     print(f'mts_supported_detectors: {mts_supported_detectors}')
-    window_sizes = config.supported_window_sizes
 
     auc_pr_dfs = []
     # vus_roc_dfs = []
@@ -59,7 +58,7 @@ def main(config: DictConfig):
     labels = combined_auc_pr_df[mts_supported_detectors].idxmax(axis=1)
     print(pd.DataFrame(labels).value_counts())
     # for window_size in window_sizes:
-    train_test_split_customized(combined_auc_pr_df.index.str.replace('.out', '.out.csv').tolist(), labels, current_working_dataset, msad_mts_data_dir, window_sizes=window_sizes,
+    train_test_split_customized(combined_auc_pr_df.index.str.replace('.out', '.out.csv').tolist(), labels, current_working_dataset, msad_mts_data_dir,
                                 train_ratio=0.5)
 
 
