@@ -13,6 +13,7 @@ import multiprocessing
 import multiprocessing.pool as mpp
 import re
 
+from metrics.ffvus.ffvus_metrics import FFVUS
 from utils.metrics_loader import MetricsLoader
 from utils.data_loader import DataLoader
 # from utils.config import *
@@ -91,6 +92,68 @@ class ScoresLoader:
 				# del file_names[idx]
 
 		return scores, idx_failed
+
+	def load_univariate_labels(self, file_names):
+		'''
+		Load the score for the specified files/timeseries. If a time series has no score for all
+		the detectors (e.g. the anomaly score has been computed for 10/12 detectors) the this
+		time series is skipped. Its index is returned in the idx_failed for the user to remove
+		it from any other places if needed.
+
+		:param dataset: list of files
+		:return scores: the loaded scores
+		:return idx_failed: list with indexes of not loaded time series
+		'''
+		detectors = self.get_detector_names()
+		scores = []
+		idx_failed = []
+		per_var_scores = []
+		univariate_labels_dict = dict()
+		data_path = os.path.join(os.path.dirname(self.scores_path), 'data')
+		for i, name in enumerate(tqdm(file_names, desc='Loading univariate labels')):
+			path = os.path.join(data_path, name)
+			if os.path.exists(path):
+				univariate_labels = pd.read_csv(path, header=None).to_numpy()[:,-1]
+				univariate_labels_dict[name] = univariate_labels
+			else:
+				idx_failed.append(i)
+			# data = []
+			# score_per_var_data = []
+			# try:
+			# 	for path, score_per_var_path in zip(paths, score_per_var_paths):
+			# 		data.append(pd.read_csv(path, header=None).to_numpy())
+			# 		score_per_var = pd.read_csv(score_per_var_path, header=None).to_numpy()
+			# 		assert score_per_var.ndim == 2
+			# 		# score_per_var = score_per_var/score_per_var.sum(axis=1, keepdims=True)
+			# 		score_per_var_data.append(score_per_var)
+
+			# except Exception as e:
+			# 	idx_failed.append(i)
+			# 	continue
+			# scores.append(np.concatenate(data, axis=1))
+			# per_var_scores.append(np.stack(score_per_var_data, axis=1))
+
+		# Delete ts which failed to load
+		if len(idx_failed) > 0:
+			print('failed to load')
+			for idx in sorted(idx_failed, reverse=True):
+				print('\t\'{}\''.format(file_names[idx]))
+				# del file_names[idx]
+
+		return univariate_labels_dict, idx_failed
+
+	def load_multivariate_labels(self, file_names):
+		'''
+		Load the score for the specified files/timeseries. If a time series has no score for all
+		the detectors (e.g. the anomaly score has been computed for 10/12 detectors) the this
+		time series is skipped. Its index is returned in the idx_failed for the user to remove
+		it from any other places if needed.
+
+		:param dataset: list of files
+		:return scores: the loaded scores
+		:return idx_failed: list with indexes of not loaded time series
+		'''
+		return None, None
 
 	def load_multivariate_score_per_var(self, file_names):
 		'''
@@ -367,7 +430,9 @@ class ScoresLoader:
 		elif metric == 'vus_roc':
 			result, _ = generate_curve(label, score, 2*10)
 		elif metric == 'vus_pr':
-			_, result = generate_curve(label, score, 2*10)
+			# _, result = generate_curve(label, score, 2*10)
+			vus_pr_metric = FFVUS(slope=64)
+			result = vus_pr_metric(label, score)
 		elif metric == 'vus':
 			result = generate_curve(label, score, 2*10)
 		# elif metric.startswith('interpretability_hit'):

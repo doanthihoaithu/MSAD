@@ -53,7 +53,7 @@ def train_deep_model(
 	os.makedirs(save_done_training, exist_ok=True)
 
 	# Set up
-	window_size = int(re.search(r'\d+', str(data_path)).group())
+	window_size = int(re.search(r'(\d+)$', str(data_path)).group())
 	# data_path example: 'data/mts/settings_one/settings_one_32'
 	working_dataset = '_'.join(str(data_path).split('/')[-1].split('_')[:-1])
 	device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'

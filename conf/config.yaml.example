@@ -17,13 +17,15 @@ mts_working_folder: ${mts_data_folder}/${mts_running_dataset}
 mts_current_metrics_path: ${mts_working_folder}/metrics
 mts_current_acc_tables_path:  ${mts_working_folder}/acc_tables
 mts_current_data_path: ${mts_working_folder}/data
+mts_current_scores_path: ${mts_working_folder}/scores
 mts_save_done_training_dir: results_mts/done_training/${mts_running_dataset}
 mts_raw_predictions_dir: results_mts/raw_predictions/${mts_running_dataset}
 mts_model_weights_dir: results_mts/weights/${mts_running_dataset}
 mts_runs_dir: results_mts/runs/${mts_running_dataset}
 
-current_window_size: 32
+current_window_size: 16
 supported_window_sizes: [16, 32, 64, 128, 256]
+#supported_window_sizes: [16]
 metric_for_labeling_windows: 'auc_pr' #Metric use to assign labels for MTS windowed.
 train_test_split_ratio: 0.5
 run_all_windows: True
@@ -86,16 +88,15 @@ model_selection:
 #    read_from_file: ${generate_features.path}/supervised_splits/train_test_split.csv
     read_from_file: ${mts_working_folder}/supervised_splits/train_test_split.csv
     read_from_file_template: ${mts_working_folder}/supervised_splits/train_test_split.csv
-    model_name: 'all'  #'all', 'resnet', 'convnet'
+    model_name: 'convnet'  #'all', 'resnet', 'convnet'
     model_parameters_file: models/configuration/${model_selection.deep_model_config.model_name}_default.json
-    batch_size: 256
+    batch_size: 128
     epochs: 100
     eval_model: true
     path_model_save: ${mts_model_weights_dir}
     save_done_training: ${mts_save_done_training_dir}
     path_prediction_save: ${mts_raw_predictions_dir}
     path_save_runs:  ${mts_runs_dir}
-
 merge_score:
   mts: true
 #  metrics: ['interpretability_log_score', 'interpretability_hit_2_score', 'vus_pr', 'auc_pr' ]
@@ -104,4 +105,25 @@ merge_score:
   save_path: results_mts/merged_scores/${mts_running_dataset}
   raw_predictions_path: results_mts/raw_predictions/${mts_running_dataset}
   time: true
+
+combine_detectors_evaluation:
+  running_mode: 'single' # 'all', 'single'
+  running_model_family: 'transformer' # 'deep', 'feature_based', 'transformer', 'rocket'
+  running_window_size: ${current_window_size}
+  mts_running_dataset: ${mts_running_dataset}
+  supported_window_sizes: ${supported_window_sizes}
+  supported_model_families: ['deep', 'feature_based', 'transformer', 'rocket']
+  path_prediction_save: ${mts_raw_predictions_dir}
+  top_k_list: [1,2,3,4]
+  strategy_list: ['average', 'vote']
+  mts_current_merged_scores_path: ${merge_score.save_path}
+  path_model_save: ${mts_model_weights_dir}
+  mts_current_scores_path: ${mts_current_scores_path}
+#  mts_current_metrics_path: ${mts_current_metrics_path}
+  mts_current_data_path: ${mts_current_data_path}
+  train_test_split_file: ${mts_working_folder}/supervised_splits/train_test_split.csv
+  combine_detector_results_dir: results_mts/combine_detectors/${mts_running_dataset}
+  model_parameters_file_template: models/configuration/{model_name}.json
+  merged: True
+
 
