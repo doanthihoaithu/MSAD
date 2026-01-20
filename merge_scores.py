@@ -115,7 +115,7 @@ def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_p
 		col_name = [x for x in current_classifier.columns if "class" in x][0]
 
 		values = np.diag(metric_scores.loc[current_classifier.index, current_classifier.iloc[:, 0]])
-		curr_df = pd.DataFrame(values, index=current_classifier.index, columns=[col_name.replace("_class", "")])
+		curr_df = pd.DataFrame(values, index=current_classifier.index, columns=[col_name.replace("_class", "_score")])
 		curr_df = pd.merge(current_classifier[col_name], curr_df, left_index=True, right_index=True)
 
 		if df is None:

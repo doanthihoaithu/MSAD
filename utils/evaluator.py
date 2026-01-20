@@ -23,9 +23,12 @@ from utils.config import *
 
 import torch
 from torch.utils.data import DataLoader
+import torch.nn as nn
 
 import numpy as np
 import pandas as pd
+
+from utils.utils import compute_weighted_scores, combine_anomaly_scores, compute_metrics
 
 
 class Evaluator:
@@ -95,6 +98,71 @@ class Evaluator:
 
 		return pd.DataFrame(data=zip(all_preds, inf_time), columns=["class", "inf"], index=fnames)
 
+	def predict_with_prob(
+			self,
+			model,
+			fnames,
+			data_path,
+			batch_size=64,
+			deep_model=True,
+			device='cuda'
+	):
+		"""Predict function for all the models
+
+		:param model: the object model whose predictions we want
+		:param fnames: the names of the timeseries to be predicted
+		:param data_path: the path to the timeseries
+			(please check that path and fnames together make the complete path)
+		:param batch_size: the batch size used to make the predictions
+		:param deep_model:
+		:return df: dataframe with timeseries and predictions per time series
+		"""
+
+		# Setup
+		all_preds = []
+		inf_time = []
+
+		loop = tqdm(
+			fnames,
+			total=len(fnames),
+			desc="Computing",
+			unit="files",
+			leave=True
+		)
+
+		# Main loop
+		preds_with_probs_dict = dict()
+		for fname in loop:
+			# Fetch data for this specific timeseries
+			data = TimeseriesDataset(
+				data_path=data_path,
+				fnames=[fname],
+				verbose=False
+			)
+
+			if deep_model:
+				tic = perf_counter()
+				preds_with_probs = self.predict_timeseries_with_prob(model, data, batch_size=batch_size, device=device)
+			else:
+				X_val, y_val = data.__getallsamples__().astype('float32'), data.__getalllabels__()
+				tic = perf_counter()
+				preds_with_probs = self.predict_timeseries_with_prob_non_deep(model, X_val, y_val)
+
+			preds_with_probs_dict[fname] = preds_with_probs
+		return preds_with_probs_dict
+		# 	# Compute metric value
+		# 	counter = Counter(preds)
+		# 	most_voted = counter.most_common(1)
+		# 	toc = perf_counter()
+		#
+		# 	# Save info
+		# 	# TODO fix multivariate_detector_names
+		# 	all_preds.append(multivariate_detector_names[most_voted[0][0]])
+		# 	inf_time.append(toc - tic)
+		#
+		# fnames = [x[:-4] for x in fnames]
+		#
+		# return pd.DataFrame(data=zip(all_preds, inf_time), columns=["class", "inf"], index=fnames)
 
 	def predict_timeseries(self, model, val_data, batch_size, device='cuda', k=1):
 		all_preds = []
@@ -116,11 +184,49 @@ class Evaluator:
 
 		return all_preds
 
+	def predict_timeseries_with_prob(self, model, val_data, batch_size, device='cuda', k=1):
+		all_preds = []
+
+		# Timeseries to batches
+		val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
+		tensor_softmax = nn.Softmax(dim=1)
+
+		for (inputs, labels) in val_loader:
+			# Move data to the same device as model
+			inputs = inputs.type(torch.float32).to(device)
+			labels = labels.type(torch.float32).to(device)
+
+			# Make predictions
+			outputs = model(inputs.float())
+
+			# Compute topk acc
+			preds = tensor_softmax(outputs)
+			preds =	preds.cpu().detach().numpy()
+			all_preds.extend(preds.tolist())
+		all_preds = np.array(all_preds)
+		assert all_preds.ndim == 2
+		return all_preds
+
 
 	def predict_timeseries_non_deep(self, model, X_val, y_val):
 		all_preds = []
 		all_acc = []
 		
+		# Make predictions
+		preds = model.predict(X_val)
+
+		# preds = outputs.argmax(dim=1)
+		# acc = (y_val == preds).sum() / y_val.shape[0]
+
+		# all_acc.append(acc)
+		all_preds.extend(preds.tolist())
+
+		return all_preds
+
+	def predict_timeseries_with_prob_non_deep(self, model, X_val, y_val):
+		all_preds = []
+		all_acc = []
+
 		# Make predictions
 		preds = model.predict(X_val)
 

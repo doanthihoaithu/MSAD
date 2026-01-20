@@ -14,13 +14,16 @@ import re
 import os
 from collections import Counter
 
+import hydra
 import torch
+from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
 from utils.config import *
 from utils.train_deep_model_utils import json_file
 from utils.timeseries_dataset import read_files, create_splits
 from utils.evaluator import Evaluator
+from utils.utils import get_project_root
 
 
 def eval_deep_model(
@@ -87,6 +90,10 @@ def eval_deep_model(
 			model.load_state_dict(torch.load(model_path))
 			model.eval()
 			model.to('cuda')
+		elif torch.backends.mps.is_available():
+			model.load_state_dict(torch.load(model_path))
+			model.eval()
+			model.to('mps')
 		else:
 			model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 			model.eval()
@@ -162,27 +169,60 @@ def eval_deep_model(
 
 	return results
 
+@hydra.main(config_path="conf", config_name="config.yaml")
+def main(cfg: DictConfig) -> None:
+	train_deep_model_config = cfg.model_selection.deep_model_config
+	if train_deep_model_config.model_name == 'all':
+		pass
+	else:
+		# train_deep_model(
+		# 	data_path=train_deep_model_config.data_path,
+		# 	split_per=train_deep_model_config.split_per,
+		# 	seed=train_deep_model_config.seed,
+		# 	read_from_file=train_deep_model_config.read_from_file,
+		# 	model_name=train_deep_model_config.model_name,
+		# 	model_parameters_file=train_deep_model_config.model_parameters_file,
+		# 	batch_size=train_deep_model_config.batch_size,
+		# 	epochs=train_deep_model_config.epochs,
+		# 	eval_model=train_deep_model_config.eval_model,
+		# 	path_model_save=train_deep_model_config.path_model_save,
+		# 	save_done_training=train_deep_model_config.save_done_training,
+		# 	path_prediction_save=train_deep_model_config.path_prediction_save,
+		# 	path_save_runs=train_deep_model_config.path_save_runs,
+		# )
+		project_root = get_project_root()
+		model_save_dir = train_deep_model_config.path_model_save
+		detected_window_size = int(re.search(r'(\d+)$', train_deep_model_config.data_path).group())
+		model_short_name = train_deep_model_config.model_name
+		model_full_name = model_short_name + f"_default_{detected_window_size}"
+		model_save_dir = os.path.join(model_save_dir, model_full_name)
 
+		all_subdirs = [os.path.join(project_root, model_save_dir, d) for d in os.listdir(model_save_dir) if
+					   os.path.isfile(os.path.join(model_save_dir, d))]
+		latest_file = max(all_subdirs, key=os.path.getmtime)
+		model_path = os.path.join(model_save_dir, latest_file)
+
+		eval_deep_model(
+			data_path=train_deep_model_config.data_path,
+			model_name=train_deep_model_config.model_name,
+			model_path=model_path,
+			model_parameters_file=train_deep_model_config.model_parameters_file,
+			path_save=train_deep_model_config.path_prediction_save,
+			read_from_file=train_deep_model_config.read_from_file
+		)
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-		prog='Evaluate deep learning models',
-		description='Evaluate all deep learning architectures on a single or multiple time series \
-			and save the results'
-	)
+	# parser = argparse.ArgumentParser(
+	# 	prog='Evaluate deep learning models',
+	# 	description='Evaluate all deep learning architectures on a single or multiple time series \
+	# 		and save the results'
+	# )
 	
-	parser.add_argument('-d', '--data', type=str, help='path to the time series to predict', required=True)
-	parser.add_argument('-m', '--model', type=str, help='model to run', required=True)
-	parser.add_argument('-mp', '--model_path', type=str, help='path to the trained model', required=True)
-	parser.add_argument('-pa', '--params', type=str, help="a json file with the model's parameters", required=True)
-	parser.add_argument('-ps', '--path_save', type=str, help='path to save the results', default="results/raw_predictions")
-	parser.add_argument('-f', '--file', type=str, help='path to file that contains a specific split', default=None)
-
-	args = parser.parse_args()
-	eval_deep_model(
-		data_path=args.data, 
-		model_name=args.model, 
-		model_path=args.model_path, 
-		model_parameters_file=args.params,
-		path_save=args.path_save,
-		read_from_file=args.file
-	)
+	# parser.add_argument('-d', '--data', type=str, help='path to the time series to predict', required=True)
+	# parser.add_argument('-m', '--model', type=str, help='model to run', required=True)
+	# parser.add_argument('-mp', '--model_path', type=str, help='path to the trained model', required=True)
+	# parser.add_argument('-pa', '--params', type=str, help="a json file with the model's parameters", required=True)
+	# parser.add_argument('-ps', '--path_save', type=str, help='path to save the results', default="results/raw_predictions")
+	# parser.add_argument('-f', '--file', type=str, help='path to file that contains a specific split', default=None)
+	#
+	# args = parser.parse_args()
+	main()
