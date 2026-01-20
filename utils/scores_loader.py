@@ -245,12 +245,18 @@ class ScoresLoader:
 			raise ValueError("length of labels and length of scores not the same")
 
 		if scores[0].ndim == 1 or scores[0].shape[-1] == 1:
-			args = [x + (metric,) for x in list(zip(labels, scores))]
-			pool = multiprocessing.Pool(n_jobs)
+			if metric == 'vus_pr':
+				results = []
+				for i, x, y in tqdm(zip(range(n_files), labels, scores), total=n_files,
+									desc='Compute {}'.format(metric)):
+					results.append(self.compute_single_sample(x, y, metric))
+			else:
+				args = [x + (metric,) for x in list(zip(labels, scores))]
+				pool = multiprocessing.Pool(n_jobs)
 
-			results = []
-			for result in tqdm(pool.istarmap(self.compute_single_sample, args), total=len(args), desc='Compute {}'.format(metric)):
-				results.append(result)
+				results = []
+				for result in tqdm(pool.istarmap(self.compute_single_sample, args), total=len(args), desc='Compute {}'.format(metric)):
+					results.append(result)
 
 			results = np.asarray([x.tolist() for x in results])
 		else:
