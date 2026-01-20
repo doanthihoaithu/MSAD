@@ -67,9 +67,12 @@ multivariate_detector_names = [
 # Dict of model names to Constructors
 deep_models = {
 	'convnet':ConvNet,
+	'convnet_default':ConvNet,
 	'inception_time':InceptionModel,
+	'inception_time_default':InceptionModel,
 	'inception':InceptionModel,
 	'resnet':ResNetBaseline,
+	'resnet_default':ResNetBaseline,
 	'sit':SignalTransformer,
 	'sit_conv_patch':SignalTransformer,
 	'sit_linear_patch':SignalTransformer,
