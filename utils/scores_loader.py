@@ -249,7 +249,7 @@ class ScoresLoader:
 			pool = multiprocessing.Pool(n_jobs)
 
 			results = []
-			for result in tqdm(pool.istarmap(self.compute_single_sample, args), total=len(args), desc="Computing metrics..."):
+			for result in tqdm(pool.istarmap(self.compute_single_sample, args), total=len(args), desc='Compute {}'.format(metric)):
 				results.append(result)
 
 			results = np.asarray([x.tolist() for x in results])
