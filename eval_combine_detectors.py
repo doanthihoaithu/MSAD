@@ -114,7 +114,10 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 			else:
 				model_names = ['rocket']
 
+		print("Model names to evaluate:", model_names)
+
 		supported_window_sizes = combine_detector_evaluation_config.supported_window_sizes
+		print("Supported window sizes:", supported_window_sizes)
 		for window_size in supported_window_sizes:
 			windowed_data_folder_name = f'{mts_running_dataset}_{window_size}'
 			windowed_data_path = os.path.join(os.path.dirname(data_path), windowed_data_folder_name)
