@@ -21,11 +21,12 @@ from omegaconf import DictConfig
 import pandas as pd
 from tqdm import tqdm
 
+from train_feature_based import classifiers
 from utils.config import *
 from utils.scores_loader import ScoresLoader
 from utils.train_deep_model_utils import json_file
 from utils.timeseries_dataset import read_files, create_splits
-from utils.evaluator import Evaluator
+from utils.evaluator import Evaluator, load_classifier
 from utils.utils import get_project_root, compute_weighted_scores, compute_metrics, combine_anomaly_scores
 
 
@@ -100,17 +101,23 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 		else:
 			assert running_mode == 'single', "Invalid running mode. Choose either 'all' or 'single'."
 			running_model_family = combine_detector_evaluation_config.running_model_family
-			assert running_model_family in ['deep','transformer'], "Invalid model family. Choose either 'deep' or 'transformer'."
+			assert running_model_family in ['deep','transformer', 'feature_based', 'rocket'], "Invalid model family. Choose either 'deep' or 'transformer'."
 			model_names = []
 			if running_model_family == 'deep':
 				model_names = ['resnet_default', 'convnet_default', 'inception_time_default']
 			elif running_model_family == 'transformer':
 				model_names = ['sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
+			elif running_model_family == 'feature_based':
+				model_names = ['knn']
+			else:
+				model_names = ['rocket']
 
 		supported_window_sizes = combine_detector_evaluation_config.supported_window_sizes
 		for window_size in supported_window_sizes:
 			windowed_data_folder_name = f'{mts_running_dataset}_{window_size}'
 			windowed_data_path = os.path.join(os.path.dirname(data_path), windowed_data_folder_name)
+
+			extracted_features_data_path = os.path.join(windowed_data_path, f'TSFRESH_{mts_running_dataset}_{window_size}.csv')
 
 			# model_save_dir = train_deep_model_config.path_model_save
 			# detected_window_size = int(re.search(r'(\d+)$', train_deep_model_config.data_path).group())
@@ -128,57 +135,62 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 				latest_file = max(all_subdirs, key=os.path.getmtime)
 				model_path = os.path.join(model_save_dir, latest_file)
 
-				model_parameters_file_template = combine_detector_evaluation_config.model_parameters_file_template
-				model_parameters_file = model_parameters_file_template.format(model_name=model_name)
-
-				# window_size = int(re.search(r'\d+', str(data_path)).group())
 				batch_size = 128
+				if model_name in deep_models.keys():
+					model_parameters_file_template = combine_detector_evaluation_config.model_parameters_file_template
+					model_parameters_file = model_parameters_file_template.format(model_name=model_name)
 
-				# assert (
-				# 		(model is not None) or \
-				# 		(model_path is not None and model_parameters_file is not None)
-				# ), "You should provide the model or the path to the model, not both"
-				#
-				# assert (
-				# 	not (fnames is not None and read_from_file is not None)
-				# ), "You should provide either the fnames or the path to the specific splits, not both"
+					# window_size = int(re.search(r'\d+', str(data_path)).group())
 
-				# Load the model only if not provided
-				# if model == None:
-					# Read models parameters
-				model_parameters = json_file(model_parameters_file)
+					# assert (
+					# 		(model is not None) or \
+					# 		(model_path is not None and model_parameters_file is not None)
+					# ), "You should provide the model or the path to the model, not both"
+					#
+					# assert (
+					# 	not (fnames is not None and read_from_file is not None)
+					# ), "You should provide either the fnames or the path to the specific splits, not both"
 
-				# Change input size according to input
-				if 'original_length' in model_parameters:
-					model_parameters['original_length'] = window_size
-				if 'timeseries_size' in model_parameters:
-					model_parameters['timeseries_size'] = window_size
+					# Load the model only if not provided
+					# if model == None:
+						# Read models parameters
+					model_parameters = json_file(model_parameters_file)
 
-				# Load model
-				model = deep_models[model_name](**model_parameters)
+					# Change input size according to input
+					if 'original_length' in model_parameters:
+						model_parameters['original_length'] = window_size
+					if 'timeseries_size' in model_parameters:
+						model_parameters['timeseries_size'] = window_size
 
-				# Check if model_path is specific file or dir
-				if os.path.isdir(model_path):
-					# Check the number of files in the directory
-					files = os.listdir(model_path)
-					if len(files) == 1:
-						# Load the single file from the directory
-						model_path = os.path.join(model_path, files[0])
+					# Load model
+					model = deep_models[model_name](**model_parameters)
+
+					# Check if model_path is specific file or dir
+					if os.path.isdir(model_path):
+						# Check the number of files in the directory
+						files = os.listdir(model_path)
+						if len(files) == 1:
+							# Load the single file from the directory
+							model_path = os.path.join(model_path, files[0])
+						else:
+							raise ValueError(
+								"Multiple files found in the 'model_path' directory. Please provide a single file or specify the file directly.")
+
+					if torch.cuda.is_available():
+						model.load_state_dict(torch.load(model_path))
+						model.eval()
+						model.to('cuda')
+					elif torch.backends.mps.is_available():
+						model.load_state_dict(torch.load(model_path))
+						model.eval()
+						model.to('mps')
 					else:
-						raise ValueError(
-							"Multiple files found in the 'model_path' directory. Please provide a single file or specify the file directly.")
-
-				if torch.cuda.is_available():
-					model.load_state_dict(torch.load(model_path))
-					model.eval()
-					model.to('cuda')
-				elif torch.backends.mps.is_available():
-					model.load_state_dict(torch.load(model_path))
-					model.eval()
-					model.to('mps')
+						model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+						model.eval()
+				elif model_name in classifiers.keys() or model_name == 'rocket':
+					model = load_classifier(model_path)
 				else:
-					model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-					model.eval()
+					raise ValueError(f"Model {model_name} not supported for combining detectors.")
 
 				# Uncomment for testing
 				# fnames = fnames[:10]
@@ -213,9 +225,10 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 				window_pred_probabilities = evaluator.predict_with_prob(
 					model=model,
 					fnames=fnames,
-					data_path=windowed_data_path,
+					data_path=windowed_data_path if (model_name in deep_models.keys() or model_name == 'rocket') else extracted_features_data_path,
 					batch_size=batch_size,
-					deep_model=True,
+					deep_model=True if model_name in deep_models.keys() else False,
+					is_rocket_model= True if model_name == 'rocket' else False,
 					device='cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu',
 				)
 				# print(window_pred_probabilities.keys())

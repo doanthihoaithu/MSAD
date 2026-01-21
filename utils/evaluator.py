@@ -105,6 +105,7 @@ class Evaluator:
 			data_path,
 			batch_size=64,
 			deep_model=True,
+			is_rocket_model=False,
 			device='cuda'
 	):
 		"""Predict function for all the models
@@ -146,7 +147,7 @@ class Evaluator:
 			else:
 				X_val, y_val = data.__getallsamples__().astype('float32'), data.__getalllabels__()
 				tic = perf_counter()
-				preds_with_probs = self.predict_timeseries_with_prob_non_deep(model, X_val, y_val)
+				preds_with_probs = self.predict_timeseries_with_prob_non_deep(model, is_rocket_model, X_val, y_val)
 
 			preds_with_probs_dict[fname] = preds_with_probs
 		return preds_with_probs_dict
@@ -220,21 +221,27 @@ class Evaluator:
 
 		# all_acc.append(acc)
 		all_preds.extend(preds.tolist())
+		all_preds = np.array(all_preds)
 
 		return all_preds
 
-	def predict_timeseries_with_prob_non_deep(self, model, X_val, y_val):
+	def predict_timeseries_with_prob_non_deep(self, model, is_rocket, X_val, y_val):
 		all_preds = []
 		all_acc = []
 
-		# Make predictions
-		preds = model.predict(X_val)
+		if is_rocket:
+			# Make predictions
+			preds = model.decision_function(X_val)
+		else:
+			# Make predictions
+			preds = model.predict_proba(X_val)
 
 		# preds = outputs.argmax(dim=1)
 		# acc = (y_val == preds).sum() / y_val.shape[0]
 
 		# all_acc.append(acc)
 		all_preds.extend(preds.tolist())
+		all_preds = np.array(all_preds)
 
 		return all_preds
 
