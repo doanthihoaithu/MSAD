@@ -65,7 +65,7 @@ model_selection:
     file: ${mts_working_folder}/supervised_splits/train_test_split.csv
     file_template: ${mts_working_folder}/supervised_splits/train_test_split.csv
     eval: true
-    path_model_save: ${mts_model_weights_dir}/supervised
+    path_model_save: ${mts_model_weights_dir}
     save_done_training: ${mts_save_done_training_dir}
     path_prediction_save: ${mts_raw_predictions_dir}
   feature_based_model_config:
