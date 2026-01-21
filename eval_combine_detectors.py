@@ -95,8 +95,10 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 					model_names.extend(['resnet_default', 'convnet_default', 'inception_time_default'])
 				elif running_model_family == 'transformer':
 					model_names.extend(['sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu'])
+				elif running_model_family == 'feature_based':
+					model_names.extend(list(classifiers.keys()))
 				else:
-					pass
+					model_names.extend(['rocket'])
 
 		else:
 			assert running_mode == 'single', "Invalid running mode. Choose either 'all' or 'single'."
@@ -108,7 +110,7 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 			elif running_model_family == 'transformer':
 				model_names = ['sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
 			elif running_model_family == 'feature_based':
-				model_names = ['knn']
+				model_names = list(classifiers.keys())
 			else:
 				model_names = ['rocket']
 
