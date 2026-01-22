@@ -111,7 +111,7 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 				model_names = ['sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
 			elif running_model_family == 'feature_based':
 				model_names = list(classifiers.keys())
-				model_names = ['qda']
+				# model_names = ['qda']
 			else:
 				model_names = ['rocket']
 
