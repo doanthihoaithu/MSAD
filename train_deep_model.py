@@ -14,7 +14,6 @@ import os
 import re
 
 import hydra
-import silence_tensorflow.auto
 from datetime import datetime
 
 import numpy as np
