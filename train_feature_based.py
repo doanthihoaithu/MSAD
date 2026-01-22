@@ -18,6 +18,7 @@ from collections import Counter
 
 import hydra
 from omegaconf import DictConfig
+from sklearn.calibration import CalibratedClassifierCV
 from tqdm import tqdm
 from datetime import datetime
 
@@ -50,7 +51,7 @@ names = {
 
 classifiers = {
 		"knn": KNeighborsClassifier(n_neighbors=5, n_jobs=-1),
-		"svc_linear": LinearSVC(C=0.025, verbose=True),
+		"svc_linear": CalibratedClassifierCV(LinearSVC(C=0.025, verbose=True)),
 		"decision_tree": DecisionTreeClassifier(max_depth=5),
 		"random_forest": RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, n_jobs=-1, verbose=True),
 		"mlp": MLPClassifier(alpha=1, max_iter=1000, verbose=True),
