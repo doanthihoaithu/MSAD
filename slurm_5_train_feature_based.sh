@@ -6,7 +6,7 @@
 #SBATCH --error=slurm_logs/train_feature_based.err # standard error file
 #SBATCH --output=slurm_logs/train_feature_based.out # standard output file
 #SBATCH --gres=gpu:a100
-#SBATCH --partition=gprod # partition name
+#SBATCH --partition=gprod_gssi # partition name
 #SBATCH --mail-type=END              # type of event notification
 #SBATCH --mail-user=thihoaithu.doan@gssi.it   # mail address
 
