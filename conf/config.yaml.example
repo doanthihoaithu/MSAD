@@ -88,8 +88,8 @@ model_selection:
 #    read_from_file: ${generate_features.path}/supervised_splits/train_test_split.csv
     read_from_file: ${mts_working_folder}/supervised_splits/train_test_split.csv
     read_from_file_template: ${mts_working_folder}/supervised_splits/train_test_split.csv
-    model_name: 'convnet'  #'all', 'resnet', 'convnet'
-    model_parameters_file: models/configuration/${model_selection.deep_model_config.model_name}_default.json
+    model_name: 'convnet_default'  #'all', 'resnet_default', 'convnet_default', 'inception_time_default'
+    model_parameters_file: models/configuration/${model_selection.deep_model_config.model_name}.json
     batch_size: 128
     epochs: 100
     eval_model: true

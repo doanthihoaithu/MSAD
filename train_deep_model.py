@@ -146,10 +146,10 @@ def train_deep_model(
 def main(cfg: DictConfig) -> None:
 	train_deep_model_config = cfg.model_selection.deep_model_config
 	if train_deep_model_config.model_name == 'all':
-		for model_name in ['resnet','convnet', 'inception_time' ]:
+		for model_name in ['resnet_default','convnet_default', 'inception_time_default' ]:
 			if cfg.run_all_windows == False:
-				model_parameters_file = train_deep_model_config.model_parameters_file.replace('all_default.json',
-																							  f'{model_name}_default.json')
+				model_parameters_file = train_deep_model_config.model_parameters_file.replace('all.json',
+																							  f'{model_name}.json')
 				train_deep_model(
 					data_path=train_deep_model_config.data_path,
 					split_per=train_deep_model_config.split_per,
@@ -168,8 +168,7 @@ def main(cfg: DictConfig) -> None:
 			else:
 				window_sizes = cfg.supported_window_sizes
 				for window_size in window_sizes:
-					model_parameters_file = train_deep_model_config.model_parameters_file.replace('all_default.json',
-																								  f'{model_name}_default.json')
+					model_parameters_file = train_deep_model_config.model_parameters_file
 
 					print(f'\n\n\nTraining model: {model_name} for window size: {window_size}\n\n\n')
 					data_path = train_deep_model_config.data_path_template.format(current_window_size=window_size)
