@@ -19,7 +19,7 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from omegaconf import DictConfig
+from omegaconf import DictConfig, open_dict
 
 from utils.train_deep_model_utils import ModelExecutioner, json_file
 
@@ -148,8 +148,12 @@ def main(cfg: DictConfig) -> None:
 	train_deep_model_config = cfg.model_selection.deep_model_config
 	if train_deep_model_config.model_name == 'all':
 		for model_name in ['sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']:
-			model_parameters_file = train_deep_model_config.model_parameters_file.replace('all_default.json', f'{model_name}.json')
-
+			with open_dict(cfg):
+				cfg.model_selection.deep_model_config.model_name = model_name
+			# model_parameters_file = train_deep_model_config.model_parameters_file.replace('all.json',
+			# 																			  f'{model_name}.json')
+			model_parameters_file = train_deep_model_config.model_parameters_file
+			# cfg.update({'model_selection': {'deep_model_config': {'model_parameters_file': model_parameters_file}}})
 			if cfg.run_all_windows == False:
 				train_deep_model(
 					data_path=train_deep_model_config.data_path,
@@ -164,11 +168,13 @@ def main(cfg: DictConfig) -> None:
 					path_model_save=train_deep_model_config.path_model_save,
 					save_done_training=train_deep_model_config.save_done_training,
 					path_prediction_save=train_deep_model_config.path_prediction_save,
-					path_save_runs = train_deep_model_config.path_save_runs,
+					path_save_runs=train_deep_model_config.path_save_runs,
 				)
 			else:
 				window_sizes = cfg.supported_window_sizes
 				for window_size in window_sizes:
+					# model_parameters_file = train_deep_model_config.model_parameters_file
+
 					print(f'\n\n\nTraining model: {model_name} for window size: {window_size}\n\n\n')
 					data_path = train_deep_model_config.data_path_template.format(current_window_size=window_size)
 					split_file = train_deep_model_config.read_from_file_template.format(current_window_size=window_size)
@@ -187,6 +193,7 @@ def main(cfg: DictConfig) -> None:
 						path_prediction_save=train_deep_model_config.path_prediction_save,
 						path_save_runs=train_deep_model_config.path_save_runs,
 					)
+
 	else:
 		train_deep_model(
 			data_path=train_deep_model_config.data_path,
@@ -201,7 +208,7 @@ def main(cfg: DictConfig) -> None:
 			path_model_save=train_deep_model_config.path_model_save,
 			save_done_training=train_deep_model_config.save_done_training,
 			path_prediction_save=train_deep_model_config.path_prediction_save,
-			path_save_runs = train_deep_model_config.path_save_runs,
+			path_save_runs=train_deep_model_config.path_save_runs,
 		)
 
 if __name__ == "__main__":
