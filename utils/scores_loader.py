@@ -14,6 +14,7 @@ import multiprocessing.pool as mpp
 import re
 
 from metrics.ffvus.ffvus_metrics import FFVUS
+from utils.config import multivariate_detector_names
 from utils.metrics_loader import MetricsLoader
 from utils.data_loader import DataLoader
 # from utils.config import *
@@ -43,19 +44,22 @@ class ScoresLoader:
 
 		:return: list of strings
 		'''
-		detectors = []
 
-		for dataset in os.listdir(self.scores_path):
-			curr_detectors = []
-			for name in os.listdir(os.path.join(self.scores_path, dataset)):
-				curr_detectors.append(name)
-			if len(detectors) < 1:
-				detectors = curr_detectors.copy()
-			elif not detectors == curr_detectors:
-				raise ValueError('detectors are not the same in this dataset \'{}\''.format(dataset))
-		detectors.sort()
-
-		return detectors
+		# TODO fix hardcode
+		return multivariate_detector_names
+		# detectors = []
+		#
+		# for dataset in os.listdir(self.scores_path):
+		# 	curr_detectors = []
+		# 	for name in os.listdir(os.path.join(self.scores_path, dataset)):
+		# 		curr_detectors.append(name)
+		# 	if len(detectors) < 1:
+		# 		detectors = curr_detectors.copy()
+		# 	elif not detectors == curr_detectors:
+		# 		raise ValueError('detectors are not the same in this dataset \'{}\''.format(dataset))
+		# detectors.sort()
+		#
+		# return detectors
 
 	def load(self, file_names):
 		'''

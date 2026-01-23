@@ -18,7 +18,7 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from omegaconf import DictConfig
+from omegaconf import DictConfig, open_dict
 
 from utils.train_deep_model_utils import ModelExecutioner, json_file
 
@@ -147,9 +147,13 @@ def main(cfg: DictConfig) -> None:
 	train_deep_model_config = cfg.model_selection.deep_model_config
 	if train_deep_model_config.model_name == 'all':
 		for model_name in ['resnet_default','convnet_default', 'inception_time_default' ]:
+			with open_dict(cfg):
+				cfg.model_selection.deep_model_config.model_name = model_name
+			# model_parameters_file = train_deep_model_config.model_parameters_file.replace('all.json',
+			# 																			  f'{model_name}.json')
+			model_parameters_file = train_deep_model_config.model_parameters_file
+			# cfg.update({'model_selection': {'deep_model_config': {'model_parameters_file': model_parameters_file}}})
 			if cfg.run_all_windows == False:
-				model_parameters_file = train_deep_model_config.model_parameters_file.replace('all.json',
-																							  f'{model_name}.json')
 				train_deep_model(
 					data_path=train_deep_model_config.data_path,
 					split_per=train_deep_model_config.split_per,
@@ -168,7 +172,7 @@ def main(cfg: DictConfig) -> None:
 			else:
 				window_sizes = cfg.supported_window_sizes
 				for window_size in window_sizes:
-					model_parameters_file = train_deep_model_config.model_parameters_file
+					# model_parameters_file = train_deep_model_config.model_parameters_file
 
 					print(f'\n\n\nTraining model: {model_name} for window size: {window_size}\n\n\n')
 					data_path = train_deep_model_config.data_path_template.format(current_window_size=window_size)
