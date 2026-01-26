@@ -70,8 +70,9 @@ class MetricsLoader:
 				# if len(df) > 1 and not np.all(df[-1].index == df[-2].index):
 				# 	raise ValueError('timeseries in metric files do not match, {} != {}'.
 				# 		format(df[-1].shape, df[-2].shape))
-
-		return pd.concat(df, axis=1)
+		resutl_df = pd.concat(df, axis=1)
+		resutl_df.dropna(inplace=True, axis=0, how='all')
+		return resutl_df
 
 	def write(self, data, files_names, detector, metric):
 		'''Write a new metric

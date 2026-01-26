@@ -78,7 +78,8 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 		print("Number of time series to evaluate:", len(fnames_for_loading_scores))
 
 		print("Loading scores for the evaluated time series...")
-		scores, idx_failed = scoreloader.load(fnames_for_loading_scores)
+		# scores, idx_failed = scoreloader.load(fnames_for_loading_scores)
+		scores, contribution_scores, idx_failed = scoreloader.load_multivariate_score_per_var(fnames_for_loading_scores)
 		print(f'Scores for {len(fnames_for_loading_scores)} evaluated MTS loaded.')
 		if len(idx_failed) > 0:
 			raise ValueError(f"Failed to load scores for the following time series: {idx_failed}")
@@ -255,12 +256,16 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 					pbar.set_postfix({'k': k, 'method': combination_method})
 
 					weights = compute_weighted_scores(window_pred_probabilities.values(), combination_method, k)
-					weighted_scores = combine_anomaly_scores(scores, weights, plot=False)
+					weighted_scores, weighted_contribution_scores = combine_anomaly_scores(scores, contribution_scores, weights, plot=False)
 					metric_values_dict = {}
 					# for index, fname in enumerate(fnames_for_loading_scores):
 					for metric_name in ['auc_pr', 'vus_pr']:
 						metric_values = scoreloader.compute_metric(univarate_labels_dict.values(), weighted_scores,
 															   metric=metric_name, n_jobs=8)
+						metric_values_dict[metric_name] = metric_values
+					for metric_name in ['interpretability_hit_2_score']:
+						metric_values = scoreloader.compute_interpretability_metric(multivariate_labels_dict.values(), weighted_contribution_scores,
+																   metric=metric_name, n_jobs=8)
 						metric_values_dict[metric_name] = metric_values
 
 					# Save results

@@ -195,15 +195,29 @@ def combine_probabilities_vote(pred_probabilities, k):
     return all_vote_probabilities
 
 
-def combine_anomaly_scores(scores, weights, plot=False):
+def combine_anomaly_scores(scores, contribution_scores, weights, plot=False):
     all_weighted_scores = []
+    all_weighted_contribution_scores = []
 
-    for score, weight in zip(scores, weights):
+    for score, contribution_score, weight in zip(scores, contribution_scores, weights):
         num_time_series = score.shape[1]
 
         # Compute the weighted average score
         ma = np.ma.MaskedArray(score, mask=np.isnan(score))
         weighted_score = np.ma.average(ma, weights=weight, axis=1).data
+        all_weighted_scores.append(weighted_score)
+
+        masked_per_var_contribution = np.ma.MaskedArray(contribution_score, mask=np.isnan(contribution_score))
+
+        contribution_weights = (ma*weight) / np.nansum((ma*weight), axis=1, keepdims=True).data
+        contribution_weights = np.expand_dims(contribution_weights, axis=2)
+
+        per_var_contribution = np.nansum(masked_per_var_contribution * contribution_weights, axis=1).data
+        all_weighted_contribution_scores.append(per_var_contribution)
+
+
+
+
         if plot:
             detector_names = Scoreloader(os.path.join('data', 'scores')).get_detector_names()
             fig, axs = plt.subplots(num_time_series + 1, 1, figsize=(10, 6), sharey=True, sharex=True)
@@ -225,9 +239,7 @@ def combine_anomaly_scores(scores, weights, plot=False):
             plt.tight_layout()
             plt.show()
 
-        all_weighted_scores.append(weighted_score)
-
-    return all_weighted_scores
+    return all_weighted_scores, all_weighted_contribution_scores
 
 
 def compute_weighted_scores(window_pred_probabilities, combination_method, k):

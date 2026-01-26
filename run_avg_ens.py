@@ -93,16 +93,21 @@ def create_avg_ens_for_mts(dataset, n_jobs=1):
 		# Write metric values for avg_ens
 		metricsloader.write(metric_values[metric], fnames, 'AVG_ENS', metric)
 
-def create_avg_ens_with_interpretability_for_mts(dataset, n_jobs=1):
+def create_avg_ens_with_interpretability_for_mts(cfg, n_jobs=8):
 	'''Create, fit and save the results for the 'Avg_ens' model
 
 	:param n_jobs: Threads to use in parallel to compute the metrics faster
 	'''
+	mts_data_path = cfg.mts_current_data_path
+	mts_scores_path = cfg.mts_current_scores_path
+	mts_metrics_path = cfg.mts_current_metrics_path
+	mts_acc_tables_path = cfg.mts_current_acc_tables_path
 
-	mts_data_path = f'data/{dataset}/data/'
-	mts_metrics_path = f'data/{dataset}/metrics/'
-	mts_scores_path = f'data/{dataset}/scores/'
-	mts_acc_tables_path = f'data/{dataset}/acc_tables/'
+
+	# mts_data_path = f'data/{dataset}/data/'
+	# mts_metrics_path = f'data/{dataset}/metrics/'
+	# mts_scores_path = f'data/{dataset}/scores/'
+	# mts_acc_tables_path = f'data/{dataset}/acc_tables/'
 	# Load metrics' names
 	metricsloader = MetricsLoader(mts_metrics_path)
 	metrics = metricsloader.get_names()
@@ -114,7 +119,7 @@ def create_avg_ens_with_interpretability_for_mts(dataset, n_jobs=1):
 
 	# Load scores
 	scoresloader = ScoresLoader(mts_scores_path)
-	scores, per_var_scores, idx_failed = scoresloader.load_multivariate_score_per_var(fnames)
+	scores, per_var_contribution, idx_failed = scoresloader.load_multivariate_score_per_var(fnames)
 
 	# Remove failed idxs
 	if len(idx_failed) > 0:
@@ -126,16 +131,16 @@ def create_avg_ens_with_interpretability_for_mts(dataset, n_jobs=1):
 
 	# Create Avg_ens
 	avg_ens = Avg_ens()
-	metric_values = avg_ens.fit_interpretability(y, scores, multivariate_y, per_var_scores, metrics, n_jobs=n_jobs)
+	metric_values = avg_ens.fit_interpretability(y, scores, multivariate_y, per_var_contribution, metrics, n_jobs=n_jobs)
 	for metric in metrics:
 		# Write metric values for avg_ens
 		metricsloader.write(metric_values[metric], fnames, 'AVG_ENS', metric)
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
 	print(f'Run AVG_ENS with config: {cfg}')
-	if 'mts' in cfg.run_avg_ens.dataset:
+	if 'mts' in cfg.run_avg_ens.mts_current_data_path:
 		# create_avg_ens_for_mts(cfg.run_avg_ens_dataset, n_jobs=cfg.run_avg_ens_n_jobs)
-		create_avg_ens_with_interpretability_for_mts(cfg.run_avg_ens.dataset, n_jobs=cfg.run_avg_ens.n_jobs)
+		create_avg_ens_with_interpretability_for_mts(cfg.run_avg_ens, n_jobs=cfg.run_avg_ens.n_jobs)
 	else:
 		create_avg_ens(n_jobs=cfg.run_avg_ens.n_jobs)
 

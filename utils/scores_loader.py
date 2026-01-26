@@ -157,7 +157,42 @@ class ScoresLoader:
 		:return scores: the loaded scores
 		:return idx_failed: list with indexes of not loaded time series
 		'''
-		return None, None
+		idx_failed = []
+		per_var_scores = []
+		multivariate_labels_dict = dict()
+		data_path = os.path.join(os.path.dirname(self.scores_path), 'data')
+		file_names = [fname + '.multivariate_labels' for fname in file_names]
+		for i, name in enumerate(tqdm(file_names, desc='Loading multivariate labels')):
+			path = os.path.join(data_path, name)
+			if os.path.exists(path):
+				multivariate_labels = pd.read_csv(path, header=None).to_numpy()
+				multivariate_labels_dict[name] = multivariate_labels
+			else:
+				idx_failed.append(i)
+		# data = []
+		# score_per_var_data = []
+		# try:
+		# 	for path, score_per_var_path in zip(paths, score_per_var_paths):
+		# 		data.append(pd.read_csv(path, header=None).to_numpy())
+		# 		score_per_var = pd.read_csv(score_per_var_path, header=None).to_numpy()
+		# 		assert score_per_var.ndim == 2
+		# 		# score_per_var = score_per_var/score_per_var.sum(axis=1, keepdims=True)
+		# 		score_per_var_data.append(score_per_var)
+
+		# except Exception as e:
+		# 	idx_failed.append(i)
+		# 	continue
+		# scores.append(np.concatenate(data, axis=1))
+		# per_var_scores.append(np.stack(score_per_var_data, axis=1))
+
+		# Delete ts which failed to load
+		if len(idx_failed) > 0:
+			print('failed to load')
+			for idx in sorted(idx_failed, reverse=True):
+				print('\t\'{}\''.format(file_names[idx]))
+		# del file_names[idx]
+
+		return multivariate_labels_dict, idx_failed
 
 	def load_multivariate_score_per_var(self, file_names):
 		'''
@@ -173,27 +208,27 @@ class ScoresLoader:
 		detectors = self.get_detector_names()
 		scores = []
 		idx_failed = []
-		per_var_scores = []
+		per_var_contribution = []
 		for i, name in enumerate(tqdm(file_names, desc='Loading scores')):
 			name_split = name.split('/')[-2:]
 			paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', name_split[1]) for detector in detectors]
-			score_per_var_paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', f'{name_split[1]}.scores_per_var') for detector in
+			contribution_per_var_paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', f'{name_split[1]}.dimension_contribution') for detector in
 					 detectors]
 			data = []
-			score_per_var_data = []
+			contribution_per_var_data = []
 			try:
-				for path, score_per_var_path in zip(paths, score_per_var_paths):
+				for path, score_per_var_path in zip(paths, contribution_per_var_paths):
 					data.append(pd.read_csv(path, header=None).to_numpy())
-					score_per_var = pd.read_csv(score_per_var_path, header=None).to_numpy()
-					assert score_per_var.ndim == 2
+					contribution_per_var = pd.read_csv(score_per_var_path, header=None).to_numpy()
+					assert contribution_per_var.ndim == 2
 					# score_per_var = score_per_var/score_per_var.sum(axis=1, keepdims=True)
-					score_per_var_data.append(score_per_var)
+					contribution_per_var_data.append(contribution_per_var)
 
 			except Exception as e:
 				idx_failed.append(i)
 				continue
 			scores.append(np.concatenate(data, axis=1))
-			per_var_scores.append(np.stack(score_per_var_data, axis=1))
+			per_var_contribution.append(np.stack(contribution_per_var_data, axis=1))
 
 		# Delete ts which failed to load
 		if len(idx_failed) > 0:
@@ -202,7 +237,7 @@ class ScoresLoader:
 				print('\t\'{}\''.format(file_names[idx]))
 				# del file_names[idx]
 
-		return scores, per_var_scores, idx_failed
+		return scores, per_var_contribution, idx_failed
 
 	def write(self, file_names, detector, score, metric):
 		'''Write some scores for a specific detector

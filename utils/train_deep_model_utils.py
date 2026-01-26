@@ -18,13 +18,12 @@ import json
 
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from time import perf_counter, process_time
+from time import perf_counter
 from datetime import datetime
 
 
@@ -87,10 +86,11 @@ class ModelExecutioner:
 				self.optimizer.zero_grad()
 
 			# Make predictions for this batch
-			outputs = self.model(inputs.float()).to(self.device)
+			# outputs = self.model(inputs.float()).to(self.device)
+			outputs = self.model(inputs).to(self.device)
 			
 			# Compute the loss and the gradients
-			loss = self.criterion(outputs.float(), labels.long())
+			loss = self.criterion(outputs, labels)
 			loss.backward()
 
 			# Adjust learning weights

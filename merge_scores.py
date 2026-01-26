@@ -130,7 +130,14 @@ def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_p
 	df.rename(columns={'TRUE_ORACLE-100': 'Oracle', 'AVG_ENS': 'Avg Ens'}, inplace=True)
 
 	# Add true labels from AUC_PR metrics
-	auc_pr_detectors_scores = metricsloader.read('AUC_PR')[multivariate_detector_names]
+	# if metric.upper() in ['AUC_PR', 'VUS_PR']:
+	# 	auc_pr_detectors_scores = metricsloader.read('AUC_PR')[multivariate_detector_names]
+	# elif metric.upper().startswith('INTERPRETABILITY'):
+	# 	print(f'Reading interpretability metric {metric}, labeling by idxmax({metric})')
+	# 	auc_pr_detectors_scores = metricsloader.read(metric)[multivariate_detector_names]
+	# else:
+	# 	auc_pr_detectors_scores = metricsloader.read('AUC_PR')[multivariate_detector_names]
+	auc_pr_detectors_scores = metricsloader.read(metric)[multivariate_detector_names]
 	refactor_indexes = auc_pr_detectors_scores.index.str.split('/')
 	refactor_indexes = ['/'.join(f[-2:]) for f in refactor_indexes]
 	auc_pr_detectors_scores.index = refactor_indexes

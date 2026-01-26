@@ -38,7 +38,11 @@ run_oracle:
   eval: false
 
 run_avg_ens:
-  dataset: mts/${mts_running_dataset}
+  mts_current_data_path: ${mts_current_data_path}
+  mts_current_metrics_path: ${mts_current_metrics_path}
+  mts_current_scores_path: ${mts_current_scores_path}
+  mts_current_acc_tables_path: ${mts_current_acc_tables_path}
+  dataset: ${mts_running_dataset}
   n_jobs: 4
 
 create_windows_dataset:
