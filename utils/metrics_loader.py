@@ -74,6 +74,29 @@ class MetricsLoader:
 		resutl_df.dropna(inplace=True, axis=0, how='all')
 		return resutl_df
 
+	def read_multiple_metrics(self, metrics)->dict:
+		df_dict = dict()
+		for metric in metrics:
+			df = []
+
+			# Check if metric exists
+			if metric.upper() not in self.get_names():
+				raise ValueError(f"{metric} metric is not one of existing metrics")
+
+			for detector in os.listdir(self.metrics_path):
+				for fname in glob.glob(os.path.join(self.metrics_path, detector, metric + '.csv')):
+					curr_df = pd.read_csv(fname, index_col=0)
+					df.append(curr_df.sort_index())
+
+			# Check for consistency (can be disabled)
+			# if len(df) > 1 and not np.all(df[-1].index == df[-2].index):
+			# 	raise ValueError('timeseries in metric files do not match, {} != {}'.
+			# 		format(df[-1].shape, df[-2].shape))
+			resutl_df = pd.concat(df, axis=1)
+			resutl_df.dropna(inplace=True, axis=0, how='all')
+			df_dict[metric] = resutl_df
+		return df_dict
+
 	def write(self, data, files_names, detector, metric):
 		'''Write a new metric
 

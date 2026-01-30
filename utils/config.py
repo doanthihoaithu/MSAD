@@ -63,6 +63,8 @@ multivariate_detector_names = [
 	'DenoisingAutoEncoder (DAE)'
 ]
 
+# TODO fix hardcode k=2
+supported_metrics_for_labeling = ['AUC_PR', 'INTERPRETABILITY_HIT_2_SCORE']
 
 # Dict of model names to Constructors
 deep_models = {
