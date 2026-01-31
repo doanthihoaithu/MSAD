@@ -83,7 +83,7 @@ model_selection:
     save_done_training: ${mts_save_done_training_dir}
     path_prediction_save: ${mts_raw_predictions_dir}
   feature_based_model_config:
-    classifier: 'svc_linear'
+    classifier: 'all'
     path: ${generate_features.path}/TSFRESH_${mts_running_dataset}_${current_window_size}.csv
     path_template: ${generate_features.path_template}/TSFRESH_${mts_running_dataset}_{current_window_size}.csv
     num_dimensions: ${dataset_basic_infor.${mts_running_dataset}.num_dimensions}
@@ -104,7 +104,7 @@ model_selection:
 #    read_from_file: ${generate_features.path}/supervised_splits/train_test_split.csv
     read_from_file: ${mts_working_folder}/supervised_splits/train_test_split.csv
     read_from_file_template: ${mts_working_folder}/supervised_splits/train_test_split.csv
-    model_name: 'sit_stem_relu'  #['all', 'resnet_default', 'convnet_default', 'inception_time_default', 'sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
+    model_name: 'all'  #['all', 'resnet_default', 'convnet_default', 'inception_time_default', 'sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
     model_parameters_file: models/configuration/${model_selection.deep_model_config.model_name}.json
     batch_size: 128
     epochs: 100
@@ -137,6 +137,8 @@ combine_detectors_evaluation:
   mts_current_scores_path: ${mts_current_scores_path}
 #  mts_current_metrics_path: ${mts_current_metrics_path}
   mts_current_data_path: ${mts_current_data_path}
+  num_dimensions: ${dataset_basic_infor.${mts_running_dataset}.num_dimensions}
+  mts_current_metric_for_optimization: ${mts_current_metric_for_optimization}
   train_test_split_file: ${mts_working_folder}/supervised_splits/train_test_split.csv
   combine_detector_results_dir: results_mts/label_by_${mts_current_metric_for_optimization}/combine_detectors/${mts_running_dataset}
   model_parameters_file_template: models/configuration/{model_name}.json
