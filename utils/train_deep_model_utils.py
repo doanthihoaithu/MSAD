@@ -86,8 +86,8 @@ class ModelExecutioner:
 				self.optimizer.zero_grad()
 
 			# Make predictions for this batch
-			# outputs = self.model(inputs.float()).to(self.device)
-			outputs = self.model(inputs).to(self.device)
+			outputs = self.model(inputs.float()).to(self.device)
+			# outputs = self.model(inputs).to(self.device)
 			
 			# Compute the loss and the gradients
 			loss = self.criterion(outputs, labels)
