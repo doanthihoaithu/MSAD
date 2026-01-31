@@ -37,7 +37,7 @@ from eval_rocket import eval_rocket
 
 
 
-def run_rocket(data_path, split_per=0.7, seed=None, read_from_file=None, eval_model=False, path_model_save=None, save_done_training=None, path_prediction_save=None):
+def run_rocket(data_path, num_dimensions, metric_for_optimization, split_per=0.7, seed=None, read_from_file=None, eval_model=False, path_model_save=None, save_done_training=None, path_prediction_save=None):
 	os.makedirs(save_done_training, exist_ok=True)
 	os.makedirs(path_model_save, exist_ok=True)
 	os.makedirs(path_prediction_save, exist_ok=True)
@@ -60,9 +60,9 @@ def run_rocket(data_path, split_per=0.7, seed=None, read_from_file=None, eval_mo
 	# train_set, val_set, test_set = train_set[:10], val_set[:10], test_set[:5]
 
 	# Load the data
-	training_data = TimeseriesDataset(data_path, fnames=train_set)
-	val_data = TimeseriesDataset(data_path, fnames=val_set)
-	test_data = TimeseriesDataset(data_path, fnames=test_set)
+	training_data = TimeseriesDataset(data_path, num_dimensions=num_dimensions, label_by=metric_for_optimization, fnames=train_set)
+	val_data = TimeseriesDataset(data_path, num_dimensions=num_dimensions, label_by=metric_for_optimization, fnames=val_set)
+	test_data = TimeseriesDataset(data_path, num_dimensions=num_dimensions, label_by=metric_for_optimization, fnames=test_set)
 
 	# Split data from labels
 	X_train, y_train = training_data.__getallsamples__().astype('float32'), training_data.__getalllabels__()
@@ -165,9 +165,13 @@ def run_rocket(data_path, split_per=0.7, seed=None, read_from_file=None, eval_mo
 def main(cfg: DictConfig) -> None:
 	rocket_config = cfg.model_selection.rocket_config
 	run_all_windows = cfg.run_all_windows
+	num_dimensions = rocket_config.num_dimensions
+	current_metric_for_optimization = cfg.model_selection.mts_current_metric_for_optimization
 	if run_all_windows == False:
 		run_rocket(
 			data_path=rocket_config.path,
+			num_dimensions=num_dimensions,
+			metric_for_optimization=current_metric_for_optimization,
 			split_per=rocket_config.split_per,
 			seed=cfg.random.seed,
 			read_from_file=rocket_config.file,
@@ -184,6 +188,8 @@ def main(cfg: DictConfig) -> None:
 			file = rocket_config.file_template.format(current_window_size=window_size)
 			run_rocket(
 				data_path=path,
+				num_dimensions=num_dimensions,
+				metric_for_optimization=current_metric_for_optimization,
 				split_per=rocket_config.split_per,
 				seed=cfg.random.seed,
 				read_from_file=file,

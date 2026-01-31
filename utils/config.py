@@ -64,7 +64,10 @@ multivariate_detector_names = [
 ]
 
 # TODO fix hardcode k=2
-supported_metrics_for_labeling = ['AUC_PR', 'INTERPRETABILITY_HIT_2_SCORE']
+supported_metrics_for_labeling = ['AUC_PR',
+								  'INTERPRETABILITY_HIT_1_SCORE',
+								  'INTERPRETABILITY_HIT_2_SCORE',
+								  'INTERPRETABILITY_HIT_3_SCORE']
 
 # Dict of model names to Constructors
 deep_models = {

@@ -65,7 +65,7 @@ def create_tmp_dataset(
 	for window_size in (progBar := tqdm(window_sizes, total=len(window_sizes), desc='Creating windowed dataset ...')):
 		progBar.set_postfix_str(f'window_size={window_size}')
 		# Form new dataset's name
-		name = '{}_{}'.format(name, window_size)
+		new_name = '{}_{}'.format(name, window_size)
 
 		# Delete any data not in metrics (some timeseries metric scores were not computed)
 		idx_to_delete = set()
@@ -111,7 +111,7 @@ def create_tmp_dataset(
 
 		# Create subfolder for each dataset
 		for dataset in datasets:
-			Path(os.path.join(save_dir, name, dataset)).mkdir(parents=True, exist_ok=True)
+			Path(os.path.join(save_dir, new_name, dataset)).mkdir(parents=True, exist_ok=True)
 
 		# Save new dataset
 		for ts_index, ts, fname in tqdm(zip(range(len(ts_list)), ts_list, fnames),
@@ -136,7 +136,7 @@ def create_tmp_dataset(
 				col_names.append(f'val_{(i-1)//num_features}_dim_{(i-1)%num_features}')
 
 			df = pd.DataFrame(data, index=new_names, columns=col_names)
-			df.to_csv(os.path.join(save_dir, name, dataset_name, ts_name + '.csv'))
+			df.to_csv(os.path.join(save_dir, new_name, dataset_name, ts_name + '.csv'))
 
 
 def split_and_compute_labels(x, metrics_data, window_size):

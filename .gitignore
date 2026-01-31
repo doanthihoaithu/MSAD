@@ -122,10 +122,10 @@ ENV/
 data/mts
 .hydra
 .idea
-results_mts/runs
-results_mts/done_training
-results_mts/raw_predictions
-results_mts/weights
-results_mts/combine_detectors
+results_mts/*/runs
+results_mts/*/done_training
+results_mts/*/raw_predictions
+results_mts/*/weights
+results_mts/*/combine_detectors
 conf/config.yaml
 data

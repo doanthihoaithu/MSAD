@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 from omegaconf import DictConfig, open_dict
 
+from train_deep_model import train_deep_model
 from utils.train_deep_model_utils import ModelExecutioner, json_file
 
 import torch
@@ -32,120 +33,121 @@ from utils.config import *
 from eval_deep_model import eval_deep_model
 
 
-def train_deep_model(
-	data_path,
-	model_name,
-	split_per,
-	seed,
-	read_from_file,
-	batch_size,
-	model_parameters_file,
-	epochs,
-	eval_model=False,
-	path_model_save=None,
-	save_done_training=None,
-	path_prediction_save=None,
-	path_save_runs= None
-):
-	os.makedirs(path_model_save, exist_ok=True)
-	os.makedirs(path_prediction_save, exist_ok=True)
-	os.makedirs(path_save_runs, exist_ok=True)
-	os.makedirs(save_done_training, exist_ok=True)
-
-	# Set up
-	window_size = int(re.search(r'\d+', str(data_path)).group())
-	# data_path example: 'data/mts/settings_one/settings_one_32'
-	working_dataset = '_'.join(str(data_path).split('/')[-1].split('_')[:-1])
-	device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
-	# save_runs = f'results/runs/{working_dataset}'
-	# save_weights = f'results/weights/{working_dataset}'
-	save_runs = path_save_runs
-	save_weights = path_model_save
-	inf_time = True 		# compute inference time per timeseries
-
-	# Load the splits
-	train_set, val_set, test_set = create_splits(
-		data_path,
-		split_per=split_per,
-		seed=seed,
-		read_from_file=read_from_file,
-	)
-	# Uncomment for testing
-	if epochs == 1:
-		train_set, val_set, test_set = train_set[:50], val_set[:10], test_set[:10]
-
-	# Load the data
-	print('----------------------------------------------------------------')
-	training_data = TimeseriesDataset(data_path, fnames=train_set)
-	val_data = TimeseriesDataset(data_path, fnames=val_set)
-	test_data = TimeseriesDataset(data_path, fnames=test_set)
-	
-	# Create the data loaders
-	training_loader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
-	validation_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
-
-	# Compute class weights to give them to the loss function
-	class_weights = training_data.get_weights_subset(device)
-
-	# Read models parameters
-	model_parameters = json_file(model_parameters_file)
-	
-	# Change input size according to input
-	if 'original_length' in model_parameters:
-		model_parameters['original_length'] = window_size
-	if 'timeseries_size' in model_parameters:
-		model_parameters['timeseries_size'] = window_size
-	
-	# Create the model, load it on GPU and print it
-	model = deep_models[model_name.lower()](**model_parameters).to(device)
-	classifier_name = f"{model_parameters_file.split('/')[-1].replace('.json', '')}_{window_size}"
-	if read_from_file is not None and "unsupervised" in read_from_file:
-		classifier_name += f"_{read_from_file.split('/')[-1].replace('unsupervised_', '')[:-len('.csv')]}"
-	
-	# Create the executioner object
-	model_execute = ModelExecutioner(
-		model=model,
-		model_name=classifier_name,
-		device=device,
-		criterion=nn.CrossEntropyLoss(weight=class_weights).to(device),
-		runs_dir=save_runs,
-		weights_dir=save_weights,
-		learning_rate=0.00001
-	)
-
-	# Check device of torch
-	model_execute.torch_devices_info()
-
-	# Run training procedure
-	model, results = model_execute.train(
-		n_epochs=epochs, 
-		training_loader=training_loader, 
-		validation_loader=validation_loader, 
-		verbose=True,
-	)
-
-	# Save training stats
-	timestamp = datetime.now().strftime('%d%m%Y_%H%M%S')
-	df = pd.DataFrame.from_dict(results, columns=["training_stats"], orient="index")
-	df.to_csv(os.path.join(save_done_training, f"{classifier_name}_{timestamp}.csv"))
-
-	# Evaluate on test set or val set
-	if eval_model:
-		if read_from_file is not None and "unsupervised" in read_from_file:
-			os.path.join(path_prediction_save, "unsupervised")
-		eval_set = test_set if len(test_set) > 0 else val_set
-		# TODO fix hardcode
-		eval_deep_model(
-			data_path=data_path,
-			fnames=eval_set,
-			model_name=model_name,
-			model=model,
-			path_save=path_prediction_save,
-		)
+# def train_deep_model(
+# 	data_path,
+# 	model_name,
+# 	split_per,
+# 	seed,
+# 	read_from_file,
+# 	batch_size,
+# 	model_parameters_file,
+# 	epochs,
+# 	eval_model=False,
+# 	path_model_save=None,
+# 	save_done_training=None,
+# 	path_prediction_save=None,
+# 	path_save_runs= None
+# ):
+# 	os.makedirs(path_model_save, exist_ok=True)
+# 	os.makedirs(path_prediction_save, exist_ok=True)
+# 	os.makedirs(path_save_runs, exist_ok=True)
+# 	os.makedirs(save_done_training, exist_ok=True)
+#
+# 	# Set up
+# 	window_size = int(re.search(r'\d+', str(data_path)).group())
+# 	# data_path example: 'data/mts/settings_one/settings_one_32'
+# 	working_dataset = '_'.join(str(data_path).split('/')[-1].split('_')[:-1])
+# 	device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+# 	# save_runs = f'results/runs/{working_dataset}'
+# 	# save_weights = f'results/weights/{working_dataset}'
+# 	save_runs = path_save_runs
+# 	save_weights = path_model_save
+# 	inf_time = True 		# compute inference time per timeseries
+#
+# 	# Load the splits
+# 	train_set, val_set, test_set = create_splits(
+# 		data_path,
+# 		split_per=split_per,
+# 		seed=seed,
+# 		read_from_file=read_from_file,
+# 	)
+# 	# Uncomment for testing
+# 	if epochs == 1:
+# 		train_set, val_set, test_set = train_set[:50], val_set[:10], test_set[:10]
+#
+# 	# Load the data
+# 	print('----------------------------------------------------------------')
+# 	training_data = TimeseriesDataset(data_path, fnames=train_set)
+# 	val_data = TimeseriesDataset(data_path, fnames=val_set)
+# 	test_data = TimeseriesDataset(data_path, fnames=test_set)
+#
+# 	# Create the data loaders
+# 	training_loader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
+# 	validation_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
+#
+# 	# Compute class weights to give them to the loss function
+# 	class_weights = training_data.get_weights_subset(device)
+#
+# 	# Read models parameters
+# 	model_parameters = json_file(model_parameters_file)
+#
+# 	# Change input size according to input
+# 	if 'original_length' in model_parameters:
+# 		model_parameters['original_length'] = window_size
+# 	if 'timeseries_size' in model_parameters:
+# 		model_parameters['timeseries_size'] = window_size
+#
+# 	# Create the model, load it on GPU and print it
+# 	model = deep_models[model_name.lower()](**model_parameters).to(device)
+# 	classifier_name = f"{model_parameters_file.split('/')[-1].replace('.json', '')}_{window_size}"
+# 	if read_from_file is not None and "unsupervised" in read_from_file:
+# 		classifier_name += f"_{read_from_file.split('/')[-1].replace('unsupervised_', '')[:-len('.csv')]}"
+#
+# 	# Create the executioner object
+# 	model_execute = ModelExecutioner(
+# 		model=model,
+# 		model_name=classifier_name,
+# 		device=device,
+# 		criterion=nn.CrossEntropyLoss(weight=class_weights).to(device),
+# 		runs_dir=save_runs,
+# 		weights_dir=save_weights,
+# 		learning_rate=0.00001
+# 	)
+#
+# 	# Check device of torch
+# 	model_execute.torch_devices_info()
+#
+# 	# Run training procedure
+# 	model, results = model_execute.train(
+# 		n_epochs=epochs,
+# 		training_loader=training_loader,
+# 		validation_loader=validation_loader,
+# 		verbose=True,
+# 	)
+#
+# 	# Save training stats
+# 	timestamp = datetime.now().strftime('%d%m%Y_%H%M%S')
+# 	df = pd.DataFrame.from_dict(results, columns=["training_stats"], orient="index")
+# 	df.to_csv(os.path.join(save_done_training, f"{classifier_name}_{timestamp}.csv"))
+#
+# 	# Evaluate on test set or val set
+# 	if eval_model:
+# 		if read_from_file is not None and "unsupervised" in read_from_file:
+# 			os.path.join(path_prediction_save, "unsupervised")
+# 		eval_set = test_set if len(test_set) > 0 else val_set
+# 		# TODO fix hardcode
+# 		eval_deep_model(
+# 			data_path=data_path,
+# 			fnames=eval_set,
+# 			model_name=model_name,
+# 			model=model,
+# 			path_save=path_prediction_save,
+# 		)
 
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
 	train_deep_model_config = cfg.model_selection.deep_model_config
+	current_metric_for_optimization = cfg.model_selection.mts_current_metric_for_optimization
 	if train_deep_model_config.model_name == 'all':
 		for model_name in ['sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']:
 			with open_dict(cfg):
@@ -157,6 +159,8 @@ def main(cfg: DictConfig) -> None:
 			if cfg.run_all_windows == False:
 				train_deep_model(
 					data_path=train_deep_model_config.data_path,
+					num_dimensions=train_deep_model_config.num_dimensions,
+					metric_for_optimization=current_metric_for_optimization,
 					split_per=train_deep_model_config.split_per,
 					seed=train_deep_model_config.seed,
 					read_from_file=train_deep_model_config.read_from_file,
@@ -180,6 +184,8 @@ def main(cfg: DictConfig) -> None:
 					split_file = train_deep_model_config.read_from_file_template.format(current_window_size=window_size)
 					train_deep_model(
 						data_path=data_path,
+						num_dimensions=train_deep_model_config.num_dimensions,
+						metric_for_optimization=current_metric_for_optimization,
 						split_per=train_deep_model_config.split_per,
 						seed=train_deep_model_config.seed,
 						read_from_file=split_file,
@@ -197,6 +203,8 @@ def main(cfg: DictConfig) -> None:
 	else:
 		train_deep_model(
 			data_path=train_deep_model_config.data_path,
+			num_dimensions=train_deep_model_config.num_dimensions,
+			metric_for_optimization=current_metric_for_optimization,
 			split_per=train_deep_model_config.split_per,
 			seed=train_deep_model_config.seed,
 			read_from_file=train_deep_model_config.read_from_file,

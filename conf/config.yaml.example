@@ -10,23 +10,31 @@ hydra:
 random:
   seed: 42
 
+dataset_basic_infor:
+  settings_five:
+    num_dimensions: 6
+    k_in_interpretability_metric: 2
+  OBSEA:
+    num_dimensions: 3
+    k_in_interpretability_metric: 1
 
 mts_data_folder: data/mts
 mts_running_dataset: settings_five
+mts_current_metric_for_optimization: INTERPRETABILITY_HIT_${dataset_basic_infor.${mts_running_dataset}.k_in_interpretability_metric}_SCORE # 'AUC_PR' or 'INTERPRETABILITY_HIT_2_SCORE'
 mts_working_folder: ${mts_data_folder}/${mts_running_dataset}
 mts_current_metrics_path: ${mts_working_folder}/metrics
 mts_current_acc_tables_path:  ${mts_working_folder}/acc_tables
 mts_current_data_path: ${mts_working_folder}/data
 mts_current_scores_path: ${mts_working_folder}/scores
-mts_save_done_training_dir: results_mts/done_training/${mts_running_dataset}
-mts_raw_predictions_dir: results_mts/raw_predictions/${mts_running_dataset}
-mts_model_weights_dir: results_mts/weights/${mts_running_dataset}
-mts_runs_dir: results_mts/runs/${mts_running_dataset}
+mts_save_done_training_dir: results_mts/label_by_${mts_current_metric_for_optimization}/done_training/${mts_running_dataset}
+mts_raw_predictions_dir: results_mts/label_by_${mts_current_metric_for_optimization}/raw_predictions/${mts_running_dataset}
+mts_model_weights_dir: results_mts/label_by_${mts_current_metric_for_optimization}/weights/${mts_running_dataset}
+mts_runs_dir: results_mts/label_by_${mts_current_metric_for_optimization}/runs/${mts_running_dataset}
 
 current_window_size: 16
 supported_window_sizes: [16, 32, 64, 128, 256]
-#supported_window_sizes: [16]
-metric_for_labeling_windows: 'auc_pr' #Metric use to assign labels for MTS windowed.
+#supported_window_sizes: [32]
+metric_for_labeling_windows: 'all' #Metric use to assign labels for MTS windowed. #'auc_pr', 'interpretability', 'all'
 train_test_split_ratio: 0.5
 run_all_windows: True
 mts_supported_detectors: ['CBLOF', 'RobustPCA', 'COPOD', 'HBOS', 'LOF', 'PCC', 'Torsk', 'Random Black Forest (RR)', 'AutoEncoder (AE)' ,'DenoisingAutoEncoder (DAE)']
@@ -55,16 +63,18 @@ create_windows_dataset:
 
 generate_features:
   mode: 'all' # 'single' or 'all'
+  metric_for_labeling_windows: ${metric_for_labeling_windows}
   path: ${mts_working_folder}/${mts_running_dataset}_${current_window_size}
   path_template: ${mts_working_folder}/${mts_running_dataset}_{current_window_size}
   window_sizes: ${supported_window_sizes}
 
 model_selection:
   window_size: ${current_window_size}
-  metric_for_labeling_windows: ${metric_for_labeling_windows}
+  mts_current_metric_for_optimization: ${mts_current_metric_for_optimization}
   rocket_config:
     path: ${generate_features.path}
     path_template: ${generate_features.path_template}
+    num_dimensions: ${dataset_basic_infor.${mts_running_dataset}.num_dimensions}
     split_per: ${train_test_split_ratio}
     file: ${mts_working_folder}/supervised_splits/train_test_split.csv
     file_template: ${mts_working_folder}/supervised_splits/train_test_split.csv
@@ -73,9 +83,10 @@ model_selection:
     save_done_training: ${mts_save_done_training_dir}
     path_prediction_save: ${mts_raw_predictions_dir}
   feature_based_model_config:
-    classifier: 'all'
+    classifier: 'svc_linear'
     path: ${generate_features.path}/TSFRESH_${mts_running_dataset}_${current_window_size}.csv
     path_template: ${generate_features.path_template}/TSFRESH_${mts_running_dataset}_{current_window_size}.csv
+    num_dimensions: ${dataset_basic_infor.${mts_running_dataset}.num_dimensions}
     split_per: ${train_test_split_ratio}
 #    file: ${generate_features.path}/supervised_splits/train_test_split.csv
     file: ${mts_working_folder}/supervised_splits/train_test_split.csv
@@ -85,14 +96,15 @@ model_selection:
     save_done_training: ${mts_save_done_training_dir}
     path_prediction_save: ${mts_raw_predictions_dir}
   deep_model_config:
-    data_path: ${generate_features.path}
+    data_path: ${generate_features.path} # flatten windows [100,16,6] => [100,96]
+    num_dimensions: ${dataset_basic_infor.${mts_running_dataset}.num_dimensions}
     data_path_template: ${generate_features.path_template}
     split_per: ${train_test_split_ratio}
     seed: ${random.seed}
 #    read_from_file: ${generate_features.path}/supervised_splits/train_test_split.csv
     read_from_file: ${mts_working_folder}/supervised_splits/train_test_split.csv
     read_from_file_template: ${mts_working_folder}/supervised_splits/train_test_split.csv
-    model_name: 'convnet_default'  #['all', 'resnet_default', 'convnet_default', 'inception_time_default', 'sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
+    model_name: 'sit_stem_relu'  #['all', 'resnet_default', 'convnet_default', 'inception_time_default', 'sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
     model_parameters_file: models/configuration/${model_selection.deep_model_config.model_name}.json
     batch_size: 128
     epochs: 100
@@ -106,8 +118,8 @@ merge_score:
 #  metrics: ['interpretability_log_score', 'interpretability_hit_2_score', 'vus_pr', 'auc_pr' ]
   metrics: ['interpretability_hit_2_score', 'vus_pr', 'auc_pr' ]
 # ['vus_roc', 'vus_pr', 'auc_roc', 'auc_pr', 'interpretability_log_score', 'interpretability_hit_2_score']
-  save_path: results_mts/merged_scores/${mts_running_dataset}
-  raw_predictions_path: results_mts/raw_predictions/${mts_running_dataset}
+  save_path: results_mts/label_by_${mts_current_metric_for_optimization}/merged_scores/${mts_running_dataset}
+  raw_predictions_path: results_mts/label_by_${mts_current_metric_for_optimization}/raw_predictions/${mts_running_dataset}
   time: true
 
 combine_detectors_evaluation:
@@ -126,7 +138,7 @@ combine_detectors_evaluation:
 #  mts_current_metrics_path: ${mts_current_metrics_path}
   mts_current_data_path: ${mts_current_data_path}
   train_test_split_file: ${mts_working_folder}/supervised_splits/train_test_split.csv
-  combine_detector_results_dir: results_mts/combine_detectors/${mts_running_dataset}
+  combine_detector_results_dir: results_mts/label_by_${mts_current_metric_for_optimization}/combine_detectors/${mts_running_dataset}
   model_parameters_file_template: models/configuration/{model_name}.json
   merged: True
 

@@ -61,7 +61,7 @@ classifiers = {
 }
 
 
-def train_feature_based(data_path, classifier_name, split_per=0.7, seed=None, read_from_file=None, eval_model=False,
+def train_feature_based(data_path, classifier_name, current_metric_for_optimization='AUC_PR', split_per=0.7, seed=None, read_from_file=None, eval_model=False,
 						path_model_save=None, save_done_training=None, path_prediction_save= None):
 	# Set up
 	os.makedirs(path_model_save, exist_ok=True)
@@ -98,9 +98,12 @@ def train_feature_based(data_path, classifier_name, split_per=0.7, seed=None, re
 	test_data = data.loc[data.index.get_level_values("name").isin(test_indexes)]
 	
 	# Split data from labels
-	y_train, X_train = training_data['label'], training_data.drop('label', axis=1)
-	y_val, X_val = val_data['label'], val_data.drop('label', axis=1)
-	y_test, X_test = test_data['label'], test_data.drop('label', axis=1)
+	label_columns = [f for f in training_data.columns if 'label_by_' in f]
+	label_for_optimization = f'label_by_{current_metric_for_optimization}'
+	assert label_for_optimization in label_columns
+	y_train, X_train = training_data[label_for_optimization], training_data.drop(label_columns, axis=1)
+	y_val, X_val = val_data[label_for_optimization], val_data.drop(label_columns, axis=1)
+	y_test, X_test = test_data[label_for_optimization], test_data.drop(label_columns, axis=1)
 
 	# Select the classifier
 	classifier = classifiers[classifier_name]
@@ -155,6 +158,7 @@ def train_feature_based(data_path, classifier_name, split_per=0.7, seed=None, re
 		# )
 		eval_feature_based(
 			data_path=data_path,
+			current_metric_for_optimization=current_metric_for_optimization,
 			model_name=classifier_name,
 			model_path=saved_model_path,
 			path_save=path_prediction_save,
@@ -165,6 +169,7 @@ def train_feature_based(data_path, classifier_name, split_per=0.7, seed=None, re
 def main(cfg: DictConfig) -> None:
 	# Option to all classifiers
 	config = cfg.model_selection.feature_based_model_config
+	mts_current_metric_for_optimization = cfg.mts_current_metric_for_optimization
 	if config.classifier == 'all':
 		clf_list = list(classifiers.keys())
 	else:
@@ -176,6 +181,7 @@ def main(cfg: DictConfig) -> None:
 			train_feature_based(
 				data_path=config.path,
 				classifier_name=classifier,
+				current_metric_for_optimization=mts_current_metric_for_optimization,
 				split_per=config.split_per,
 				seed=cfg.random.seed,
 				read_from_file=config.file,
@@ -194,6 +200,7 @@ def main(cfg: DictConfig) -> None:
 				train_feature_based(
 					data_path=path,
 					classifier_name=classifier,
+					current_metric_for_optimization=mts_current_metric_for_optimization,
 					split_per=config.split_per,
 					seed=cfg.random.seed,
 					read_from_file=file,

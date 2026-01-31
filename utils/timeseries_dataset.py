@@ -139,9 +139,10 @@ def read_files(data_path):
 
 
 class TimeseriesDataset(Dataset):
-	def __init__(self, data_path, fnames, verbose=True):
+	def __init__(self, data_path, fnames, num_dimensions, label_by,verbose=True):
 		self.data_path = data_path
 		self.fnames = fnames
+		self.num_dimensions= num_dimensions
 		self.labels = []
 		self.samples = []
 		self.indexes = []
@@ -153,12 +154,13 @@ class TimeseriesDataset(Dataset):
 		if 'TSFRESH' in data_path and data_path.endswith('.csv'):
 			extracted_features_df = pd.read_csv(data_path, index_col=0)
 			tmp_fnames = [f[:-4] for f in fnames]
+			label_columns = [f for f in extracted_features_df.columns if 'label_by_' in f]
 			for fname in tqdm(tmp_fnames, disable=not verbose, desc="Loading dataset"):
 				curr_idxs = extracted_features_df.index[extracted_features_df.index.str.contains(fname)]
 				curr_data = extracted_features_df.loc[curr_idxs]
 				self.indexes.extend(curr_idxs.tolist())
-				self.labels.extend(curr_data['label'].tolist())
-				self.samples.append(curr_data.iloc[:, 1:].to_numpy())
+				self.labels.extend(curr_data[f'label_by_{label_by}'].tolist())
+				self.samples.append(curr_data.iloc[:, len(label_columns):].to_numpy())
 
 			# Concatenate samples and labels
 			self.labels = np.asarray(self.labels)
@@ -168,25 +170,31 @@ class TimeseriesDataset(Dataset):
 			# Read datasets
 			for fname in tqdm(self.fnames, disable=not verbose, desc="Loading dataset"):
 				data = pd.read_csv(os.path.join(self.data_path, fname), index_col=0)
+				label_columns = [f for f in data.columns if 'label_by_' in f]
 				dataset = fname.split('/')[0]
 				curr_idxs = list(data.index)
 				curr_idxs = [os.path.join(dataset, x) for x in curr_idxs]
 
 				self.indexes.extend(curr_idxs)
-				self.labels.extend(data['label'].tolist())
-				self.samples.append(data.iloc[:, 1:].to_numpy())
+				self.labels.extend(data[f'label_by_{label_by}'].tolist())
+				self.samples.append(data.iloc[:, len(label_columns):].to_numpy())
 			# Concatenate samples and labels
 			self.labels = np.asarray(self.labels)
 			self.samples = np.concatenate(self.samples, axis=0)
 
 			if self.is_multivariate:
 				# TODO fix hardcode
-				length, n_features = self.samples.shape
-				self.samples = self.samples.reshape(length, -1, 6)
+				length, n_features_flatten = self.samples.shape
+				assert n_features_flatten % self.num_dimensions == 0
+				self.samples = self.samples.reshape(length, -1, self.num_dimensions)
 				self.samples = np.transpose(self.samples, (0, 2, 1))
 			else:
 				# Add channels dimension
 				self.samples = self.samples[:, np.newaxis, :]
+				# length, n_features_flatten = self.samples.shape
+				# assert n_features_flatten % self.num_dimensions == 0
+				# self.samples = self.samples.reshape(length, -1, self.num_dimensions)
+				# self.samples = np.transpose(self.samples, (0, 2, 1))
 
 		
 	def __len__(self):

@@ -24,9 +24,10 @@ from utils.config import *
 
 
 def eval_feature_based(
-	data_path, 
+	data_path,
+	current_metric_for_optimization,
 	model_name, 
-	model_path, 
+	model_path,
 	path_save=None, 
 	fnames=None,
 	read_from_file=None,
@@ -51,7 +52,10 @@ def eval_feature_based(
 
 	# Read data (single csv file or directory with csvs)
 	data = pd.read_csv(data_path, index_col=0)
-	labels, data = data['label'], data.drop('label', axis=1)
+	label_columns = [f for f in data.columns if 'label_by_' in f]
+	label_for_optimization = f'label_by_{current_metric_for_optimization}'
+	assert label_for_optimization in label_columns
+	labels, data = data[label_for_optimization], data.drop(label_columns, axis=1)
 
 	# Load the splits
 	if read_from_file is not None:
@@ -115,7 +119,8 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 	eval_feature_based(
-		data_path=args.data, 
+		data_path=args.data,
+		current_metric_for_optimization='AUC_PR',
 		model_name=args.model,
 		model_path=args.model_path,
 		path_save=args.path_save,

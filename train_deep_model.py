@@ -33,6 +33,8 @@ from eval_deep_model import eval_deep_model
 
 def train_deep_model(
 	data_path,
+	num_dimensions,
+	metric_for_optimization,
 	model_name,
 	split_per,
 	seed,
@@ -75,9 +77,10 @@ def train_deep_model(
 
 	# Load the data
 	print('----------------------------------------------------------------')
-	training_data = TimeseriesDataset(data_path, fnames=train_set)
-	val_data = TimeseriesDataset(data_path, fnames=val_set)
-	test_data = TimeseriesDataset(data_path, fnames=test_set)
+	print(f'Current metric for optimization: {metric_for_optimization}, => Loading data with label_by={metric_for_optimization}')
+	training_data = TimeseriesDataset(data_path, num_dimensions=num_dimensions, label_by=metric_for_optimization, fnames=train_set)
+	val_data = TimeseriesDataset(data_path, num_dimensions=num_dimensions,  label_by=metric_for_optimization, fnames=val_set)
+	test_data = TimeseriesDataset(data_path, num_dimensions=num_dimensions, label_by=metric_for_optimization, fnames=test_set)
 	
 	# Create the data loaders
 	training_loader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
@@ -145,6 +148,7 @@ def train_deep_model(
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
 	train_deep_model_config = cfg.model_selection.deep_model_config
+	current_metric_for_optimization = cfg.model_selection.mts_current_metric_for_optimization
 	if train_deep_model_config.model_name == 'all':
 		for model_name in ['resnet_default','convnet_default', 'inception_time_default' ]:
 			with open_dict(cfg):
@@ -156,6 +160,8 @@ def main(cfg: DictConfig) -> None:
 			if cfg.run_all_windows == False:
 				train_deep_model(
 					data_path=train_deep_model_config.data_path,
+					num_dimensions=train_deep_model_config.num_dimensions,
+					metric_for_optimization=current_metric_for_optimization,
 					split_per=train_deep_model_config.split_per,
 					seed=train_deep_model_config.seed,
 					read_from_file=train_deep_model_config.read_from_file,
@@ -179,6 +185,8 @@ def main(cfg: DictConfig) -> None:
 					split_file = train_deep_model_config.read_from_file_template.format(current_window_size=window_size)
 					train_deep_model(
 						data_path=data_path,
+						num_dimensions=train_deep_model_config.num_dimensions,
+						metric_for_optimization=current_metric_for_optimization,
 						split_per=train_deep_model_config.split_per,
 						seed=train_deep_model_config.seed,
 						read_from_file=split_file,
@@ -196,6 +204,8 @@ def main(cfg: DictConfig) -> None:
 	else:
 		train_deep_model(
 			data_path=train_deep_model_config.data_path,
+			num_dimensions=train_deep_model_config.num_dimensions,
+			metric_for_optimization=current_metric_for_optimization,
 			split_per=train_deep_model_config.split_per,
 			seed=train_deep_model_config.seed,
 			read_from_file=train_deep_model_config.read_from_file,

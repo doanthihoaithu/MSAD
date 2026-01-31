@@ -31,7 +31,7 @@ def generate_features(path):
 
 	:param path: path to the dataset to be converted
 	"""
-	window_size = int(re.search(r'\d+', path).group())
+	window_size = int(re.search(r'\d+$', path).group())
 
 	# Create name of new dataset
 	dataset_name = [x for x in path.split('/') if str(window_size) in x][0]
@@ -43,7 +43,13 @@ def generate_features(path):
 	df = dataloader.load_df(datasets)
 	
 	# Divide df
-	labels = df.pop("label")
+	label_columns = [f for f in df.columns if 'label_by_' in f]
+	# Multiple labels [2, n] with using both auc_pr, interpretabilaty for labeling
+	label_by_metric_df = df[label_columns].copy()
+	df = df.drop(label_columns, axis=1)
+
+
+	#TODO update for extract features for MTS
 	x = df.to_numpy()[:, np.newaxis]
 	index = df.index
 
@@ -59,7 +65,7 @@ def generate_features(path):
 
 	# Create new dataframe
 	X_transformed.index = index
-	X_transformed = pd.merge(labels, X_transformed, left_index=True, right_index=True)
+	X_transformed = pd.merge(label_by_metric_df, X_transformed, left_index=True, right_index=True)
 	
 	# Save new features
 	X_transformed.to_csv(os.path.join(path, new_name))

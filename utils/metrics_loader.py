@@ -81,8 +81,12 @@ class MetricsLoader:
 
 			# Check if metric exists
 			if metric.upper() not in self.get_names():
-				raise ValueError(f"{metric} metric is not one of existing metrics")
-
+				if metric.upper().startswith('INTERPRETABILITY'):
+					print(f'Try to load metric {metric} but it is not existed in metric folder {self.metrics_path}. Skip!')
+					continue
+				else:
+					raise ValueError(f"{metric} metric is not one of existing metrics")
+			print(f'Found metric {metric} in folder {self.metrics_path}')
 			for detector in os.listdir(self.metrics_path):
 				for fname in glob.glob(os.path.join(self.metrics_path, detector, metric + '.csv')):
 					curr_df = pd.read_csv(fname, index_col=0)
