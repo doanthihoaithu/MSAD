@@ -137,11 +137,11 @@ def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_p
 	# 	auc_pr_detectors_scores = metricsloader.read(metric)[multivariate_detector_names]
 	# else:
 	# 	auc_pr_detectors_scores = metricsloader.read('AUC_PR')[multivariate_detector_names]
-	auc_pr_detectors_scores = metricsloader.read(metric)[multivariate_detector_names]
-	refactor_indexes = auc_pr_detectors_scores.index.str.split('/')
+	detectors_scores_by_metric = metric_scores[multivariate_detector_names]
+	refactor_indexes = detectors_scores_by_metric.index.str.split('/')
 	refactor_indexes = ['/'.join(f[-2:]) for f in refactor_indexes]
-	auc_pr_detectors_scores.index = refactor_indexes
-	labels = auc_pr_detectors_scores.idxmax(axis=1).to_frame(name='label')
+	detectors_scores_by_metric.index = refactor_indexes
+	labels = detectors_scores_by_metric.idxmax(axis=1).to_frame(name=f'label_by_{metric.upper()}')
 	df = pd.merge(labels, df, left_index=True, right_index=True)
 
 	# Change the indexes to dataset, filename
@@ -162,8 +162,9 @@ def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_p
 	final_df.to_csv(os.path.join(save_path, f'current_accuracy_{metric.upper()}.csv'), index=True)
 	print(final_df)
 
-def merge_inference_times(path, save_path):
-	detectors_inf_time_path = ('results_mts/execution_time/detectors_inference_time.csv')
+def merge_inference_times(path, save_path, detector_execution_time_path):
+	# detectors_inf_time_path = ('results_mts/execution_time/detectors_inference_time.csv')
+	detectors_inf_time_path = detector_execution_time_path
 
 	# Read raw predictions of each model selector and fix indexing
 	selector_predictions = {}
@@ -237,6 +238,7 @@ def main(cfg: DictConfig) -> None:
 		merge_inference_times(
 			path=cfg.merge_score.raw_predictions_path,
 			save_path=cfg.merge_score.save_path,
+			detector_execution_time_path=cfg.merge_score.detector_execution_time_path
 		)
 		print(f'Merge inference times to  {cfg.merge_score.save_path}')
 

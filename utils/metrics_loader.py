@@ -64,11 +64,11 @@ class MetricsLoader:
 			else:
 				raise ValueError(f"{metric} metric is not one of existing metrics")
 
-		print('Metric_path', self.metrics_path)
+		# print('Metric_path', self.metrics_path)
 		for detector in os.listdir(self.metrics_path):
-			print(detector)
+			# print(detector)
 			for fname in glob.glob(os.path.join(self.metrics_path, detector, metric + '.csv')):
-				print(fname)
+				# print(fname)
 				curr_df = pd.read_csv(fname, index_col = 0)
 				df.append(curr_df.sort_index())
 				
