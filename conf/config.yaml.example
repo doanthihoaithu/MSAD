@@ -120,7 +120,7 @@ merge_score:
 # ['vus_roc', 'vus_pr', 'auc_roc', 'auc_pr', 'interpretability_log_score', 'interpretability_hit_2_score']
   save_path: results_mts/label_by_${mts_current_metric_for_optimization}/merged_scores/${mts_running_dataset}
   raw_predictions_path: results_mts/label_by_${mts_current_metric_for_optimization}/raw_predictions/${mts_running_dataset}
-  detector_execution_time_path: results_mts/label_by_${mts_current_metric_for_optimization}/execution_time/${mts_running_dataset}/detectors_inference_time.csv
+  detector_execution_time_path: results_mts/execution_time/${mts_running_dataset}/detectors_inference_time.csv
   time: true
 
 combine_detectors_evaluation:
