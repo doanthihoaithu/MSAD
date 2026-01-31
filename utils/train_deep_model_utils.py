@@ -77,7 +77,7 @@ class ModelExecutioner:
 		for i, (inputs, labels) in loop:
 			# Move data to the same device as model
 			inputs = inputs.to(self.device, dtype=torch.float32)
-			labels = labels.to(self.device, dtype=torch.int)
+			labels = labels.to(self.device, dtype=torch.LongTensor)
 
 			# Zero the gradients for every batch
 			if self.use_scheduler:
@@ -90,7 +90,7 @@ class ModelExecutioner:
 			# outputs = self.model(inputs).to(self.device)
 			
 			# Compute the loss and the gradients
-			loss = self.criterion(outputs, labels)
+			loss = self.criterion(outputs.float(), labels.long())
 			loss.backward()
 
 			# Adjust learning weights
@@ -145,7 +145,7 @@ class ModelExecutioner:
 			for i, (inputs, labels) in loop:
 				# Move data to the same device as model
 				inputs = inputs.to(self.device, dtype=torch.float32)
-				labels = labels.to(self.device, dtype=torch.float32)
+				labels = labels.to(self.device, dtype=torch.LongTensor)
 
 				# Make predictions for this batch
 				outputs = self.model(inputs.float()).to(self.device)
