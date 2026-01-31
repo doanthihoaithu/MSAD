@@ -18,7 +18,7 @@ from utils.timeseries_dataset import read_files, create_splits
 from utils.evaluator import Evaluator, load_classifier
 
 
-def eval_rocket(data_path, model_path, path_save=None, fnames=None, read_from_file=None):
+def eval_rocket(data_path, num_dimensions, metric_for_optimization, model_path, path_save=None, fnames=None, read_from_file=None):
 	"""Predict time series with the given ROCKET model.
 
 	:param data_path: Path to the data to predict.
@@ -77,6 +77,8 @@ def eval_rocket(data_path, model_path, path_save=None, fnames=None, read_from_fi
 		model=model,
 		fnames=fnames,
 		data_path=data_path,
+		num_dimensions=num_dimensions,
+		metric_for_optimization=metric_for_optimization,
 		deep_model=False,
 	)
 	results.columns = [f"{classifier_name}_{x}" for x in results.columns.values]
@@ -106,7 +108,9 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 	eval_rocket(
-		data_path=args.data, 
+		data_path=args.data,
+		num_dimensions=6,
+		metric_for_optimization='AUC_PR',
 		model_path=args.model_path,
 		path_save=args.path_save,
 		read_from_file=args.file

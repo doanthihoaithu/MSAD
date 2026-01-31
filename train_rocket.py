@@ -156,6 +156,8 @@ def run_rocket(data_path, num_dimensions, metric_for_optimization, split_per=0.7
 		# )
 		eval_rocket(
 			data_path=data_path,
+			num_dimensions=num_dimensions,
+			metric_for_optimization=metric_for_optimization,
 			model_path=saved_model_path,
 			path_save=path_prediction_save,
 			fnames=eval_set,

@@ -27,7 +27,9 @@ from utils.utils import get_project_root
 
 
 def eval_deep_model(
-	data_path, 
+	data_path,
+	num_dimensions,
+	metric_for_optimization,
 	model_name, 
 	model_path=None, 
 	model_parameters_file=None, 
@@ -148,6 +150,8 @@ def eval_deep_model(
 	results = evaluator.predict(
 		model=model,
 		fnames=fnames,
+		num_dimensions=num_dimensions,
+		metric_for_optimization=metric_for_optimization,
 		data_path=data_path,
 		batch_size=batch_size,
 		deep_model=True,
@@ -172,6 +176,7 @@ def eval_deep_model(
 @hydra.main(config_path="conf", config_name="config.yaml")
 def main(cfg: DictConfig) -> None:
 	train_deep_model_config = cfg.model_selection.deep_model_config
+	current_metric_for_optimization = cfg.model_selection.mts_current_metric_for_optimization
 	if train_deep_model_config.model_name == 'all':
 		pass
 	else:
@@ -205,6 +210,8 @@ def main(cfg: DictConfig) -> None:
 		eval_deep_model(
 			data_path=train_deep_model_config.data_path,
 			model_name=train_deep_model_config.model_name,
+			num_dimensions=train_deep_model_config.num_dimensions,
+			metric_for_optimization=current_metric_for_optimization,
 			model_path=model_path,
 			model_parameters_file=train_deep_model_config.model_parameters_file,
 			path_save=train_deep_model_config.path_prediction_save,

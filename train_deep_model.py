@@ -139,6 +139,8 @@ def train_deep_model(
 		# TODO fix hardcode
 		eval_deep_model(
 			data_path=data_path,
+			num_dimensions=num_dimensions,
+			metric_for_optimization=metric_for_optimization,
 			fnames=eval_set,
 			model_name=model_name,
 			model=model,

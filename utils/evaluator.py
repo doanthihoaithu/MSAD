@@ -40,6 +40,8 @@ class Evaluator:
 		model,
 		fnames,
 		data_path,
+		num_dimensions,
+		metric_for_optimization,
 		batch_size=64,
 		deep_model=True,
 		device='cuda'
@@ -72,6 +74,8 @@ class Evaluator:
 			# Fetch data for this specific timeseries
 			data = TimeseriesDataset(
 				data_path=data_path,
+				num_dimensions=num_dimensions,
+				label_by=metric_for_optimization,
 				fnames=[fname],
 				verbose=False
 			)
@@ -103,6 +107,8 @@ class Evaluator:
 			model,
 			fnames,
 			data_path,
+			num_dimensions,
+			metric_for_optimization,
 			batch_size=64,
 			deep_model=True,
 			is_rocket_model=False,
@@ -138,6 +144,8 @@ class Evaluator:
 			data = TimeseriesDataset(
 				data_path=data_path,
 				fnames=[fname],
+				num_dimensions=num_dimensions,
+				label_by=metric_for_optimization,
 				verbose=False
 			)
 
