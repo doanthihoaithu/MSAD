@@ -35,7 +35,6 @@ class MetricsLoader:
 		n_detectors = len(os.listdir(self.metrics_path))
 
 		for detector in os.listdir(self.metrics_path):
-			print(detector)
 			for fname in glob.glob(os.path.join(self.metrics_path, detector, '*.csv')):
 				result.append(fname)
 
@@ -67,7 +66,9 @@ class MetricsLoader:
 
 		print('Metric_path', self.metrics_path)
 		for detector in os.listdir(self.metrics_path):
+			print(detector)
 			for fname in glob.glob(os.path.join(self.metrics_path, detector, metric + '.csv')):
+				print(fname)
 				curr_df = pd.read_csv(fname, index_col = 0)
 				df.append(curr_df.sort_index())
 				
