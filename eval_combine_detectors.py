@@ -233,6 +233,8 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 				window_pred_probabilities = evaluator.predict_with_prob(
 					model=model,
 					fnames=fnames,
+					num_dimensions=combine_detector_evaluation_config.num_dimensions,
+					metric_for_optimization=combine_detector_evaluation_config.mts_current_metric_for_optimization,
 					data_path=windowed_data_path if (model_name in deep_models.keys() or model_name == 'rocket') else extracted_features_data_path,
 					batch_size=batch_size,
 					deep_model=True if model_name in deep_models.keys() else False,
