@@ -77,7 +77,7 @@ class ModelExecutioner:
 		for i, (inputs, labels) in loop:
 			# Move data to the same device as model
 			inputs = inputs.to(self.device, dtype=torch.float32)
-			labels = labels.to(self.device, dtype=torch.float32)
+			labels = labels.to(self.device, dtype=torch.int)
 
 			# Zero the gradients for every batch
 			if self.use_scheduler:
