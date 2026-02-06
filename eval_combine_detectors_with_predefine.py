@@ -266,7 +266,7 @@ def eval_combine_multiple_detectors_with_predefine_selected_detectors(combine_de
 										  (merged_df['Model Selector'] == f'{model_name}_{window_size}')
 										  ].copy()
 
-					merged_df['fname'] = merged_df['dataset'] + '/' + merged_df['filename']
+					merged_df['fname'] = merged_df['dataset'] + '/' + merged_df['filename'] + '.csv'
 
 					top_k_detectors_dict = dict()
 					for fn in window_pred_probabilities.keys():
