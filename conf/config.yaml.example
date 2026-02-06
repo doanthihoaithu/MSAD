@@ -142,7 +142,12 @@ combine_detectors_evaluation:
   mts_current_metric_for_optimization: ${mts_current_metric_for_optimization}
   train_test_split_file: ${mts_working_folder}/supervised_splits/train_test_split.csv
   combine_detector_results_dir: results_mts/label_by_${mts_current_metric_for_optimization}/combine_detectors/${mts_running_dataset}
+  combine_detector_results_dir_template: results_mts/label_by_{mts_current_metric_for_optimization}/combine_detectors/${mts_running_dataset}
+
   model_parameters_file_template: models/configuration/{model_name}.json
   merged: True
+
+  construct_baseline:
+    first_metric: 'AUC_PR'
 
 

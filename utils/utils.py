@@ -9,6 +9,9 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import json
 
+from utils.config import multivariate_detector_names
+
+
 # from tsb_kit.vus.metrics import get_metrics
 
 
@@ -161,6 +164,27 @@ def combine_probabilities_average(pred_probabilities, k):
 
     return all_softmax_probabilities
 
+def combine_probabilities_average_with_predefine_top_k_detectors(pred_probabilities, top_k_indices):
+    all_softmax_probabilities = []
+
+    for probabilities in pred_probabilities:
+        # Calculate mean of probabilities
+        averaged_probabilities = np.mean(probabilities, axis=0)
+
+        # Find indices of top-k elements
+        # top_k_indices = np.argsort(averaged_probabilities)[-k:]
+
+        # Zero out elements not in top-k
+        averaged_probabilities_filtered = np.zeros_like(averaged_probabilities)
+        averaged_probabilities_filtered[top_k_indices] = averaged_probabilities[top_k_indices]
+
+        # Normalize probabilities so that they sum to 1
+        averaged_probabilities_filtered = averaged_probabilities_filtered / sum(averaged_probabilities_filtered)
+
+        all_softmax_probabilities.append(averaged_probabilities_filtered)
+
+    return all_softmax_probabilities
+
 
 def combine_probabilities_vote(pred_probabilities, k):
     all_vote_probabilities = []
@@ -177,6 +201,39 @@ def combine_probabilities_vote(pred_probabilities, k):
 
         # Find indices of top-k elements
         top_k_indices = np.argsort(vote_probabilities)[-k:]
+
+        # Zero out elements not in top-k
+        vote_probabilities_filtered = np.zeros_like(vote_probabilities)
+        vote_probabilities_filtered[top_k_indices] = vote_probabilities[top_k_indices]
+
+        # Normalize probabilities so that they sum to 1
+        vote_probabilities_filtered = vote_probabilities_filtered / sum(vote_probabilities_filtered)
+
+        # # This is the same and faster just saying ;)
+        # bottom_indices = np.argsort(vote_counts)[:k]
+        # vote_counts[bottom_indices] = 0
+        # all_vote_probabilities.append(vote_counts/sum(vote_counts))
+
+        all_vote_probabilities.append(vote_probabilities_filtered)
+
+    return all_vote_probabilities
+
+
+def combine_probabilities_vote_with_predefine_top_k_detectors(pred_probabilities, top_k_indices):
+    all_vote_probabilities = []
+
+    for probabilities in pred_probabilities:
+        num_classes = probabilities.shape[1]
+
+        # Perform argmax operation along axis 0 to count the votes
+        votes = np.argmax(probabilities, axis=1)
+        vote_counts = np.bincount(votes, minlength=num_classes)
+
+        # Create a probability distribution based on the votes
+        vote_probabilities = vote_counts / np.sum(vote_counts)
+
+        # Find indices of top-k elements
+        # top_k_indices = np.argsort(vote_probabilities)[-k:]
 
         # Zero out elements not in top-k
         vote_probabilities_filtered = np.zeros_like(vote_probabilities)
@@ -251,6 +308,22 @@ def compute_weighted_scores(window_pred_probabilities, combination_method, k):
         raise ValueError("Invalid combination_method. Choose either 'average' or 'vote'.")
 
     return np.array(weights)
+
+def compute_weighted_scores_based_on_predefined_top_k(window_pred_probabilities, combination_method, k, merge_df):
+    predefined_weights_df = merge_df[merge_df['combination_method'] == combination_method & merge_df['top_k'] == k]
+    detector_columns  = multivariate_detector_names
+    detector_columns = [f'weight_{f}' for f in detector_columns]
+    selected_detector_indices = predefined_weights_df[detector_columns]
+    if combination_method == 'average':
+        weights = combine_probabilities_average_with_predefine_top_k_detectors(window_pred_probabilities, selected_detector_indices)
+    elif combination_method == 'vote':
+        weights = combine_probabilities_vote_with_predefine_top_k_detectors(window_pred_probabilities, selected_detector_indices)
+    else:
+        raise ValueError("Invalid combination_method. Choose either 'average' or 'vote'.")
+
+    return np.array(weights)
+
+
 
 
 def compute_metrics(labels, scores, k=None):

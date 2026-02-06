@@ -85,7 +85,7 @@ from natsort import natsorted
 # 	print(final_df)
 
 
-def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_path):
+def merge_scores_mts(path, metric, metric_for_optimization, save_path, mts_metrics_path, mts_acc_tables_path):
 	# Load MetricsLoader object
 	metricsloader = MetricsLoader(mts_metrics_path)
 
@@ -103,6 +103,9 @@ def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_p
 
 	# Read detectors and oracles scores
 	metric_scores = metricsloader.read(metric.upper())
+	metric_scores_according_to_metric_for_optimization = metric_scores
+	if metric.upper() != metric_for_optimization:
+		metric_scores_according_to_metric_for_optimization = metricsloader.read(metric_for_optimization)
 	refactor_indexes = metric_scores.index.str.split('/')
 	refactor_indexes = ['/'.join(f[-2:]) for f in refactor_indexes]
 	metric_scores.index = refactor_indexes
@@ -137,11 +140,14 @@ def merge_scores_mts(path, metric, save_path, mts_metrics_path, mts_acc_tables_p
 	# 	auc_pr_detectors_scores = metricsloader.read(metric)[multivariate_detector_names]
 	# else:
 	# 	auc_pr_detectors_scores = metricsloader.read('AUC_PR')[multivariate_detector_names]
-	detectors_scores_by_metric = metric_scores[multivariate_detector_names]
+	detectors_scores_by_metric = metric_scores_according_to_metric_for_optimization[multivariate_detector_names]
 	refactor_indexes = detectors_scores_by_metric.index.str.split('/')
 	refactor_indexes = ['/'.join(f[-2:]) for f in refactor_indexes]
 	detectors_scores_by_metric.index = refactor_indexes
-	labels = detectors_scores_by_metric.idxmax(axis=1).to_frame(name=f'label_by_{metric.upper()}')
+	labels = detectors_scores_by_metric.idxmax(axis=1).to_frame(name=f'label_by_{metric_for_optimization}')
+	recompute_corresponding_oracle = np.diag(metric_scores.loc[df.index, labels.loc[df.index].iloc[:,0]])
+	recompute_corresponding_oracle_df = pd.DataFrame(recompute_corresponding_oracle, index=df.index, columns=['Oracle_new'])
+	labels = pd.merge(labels, recompute_corresponding_oracle_df, left_index=True, right_index=True)
 	df = pd.merge(labels, df, left_index=True, right_index=True)
 
 	# Change the indexes to dataset, filename
@@ -223,10 +229,12 @@ def main(cfg: DictConfig) -> None:
 	# 	)
 	# else:
 	metrics = cfg.merge_score.metrics
+	metric_for_optimization = cfg.mts_current_metric_for_optimization
 	for m in metrics:
 		merge_scores_mts(
 			path=cfg.merge_score.raw_predictions_path,
 			metric=m,
+			metric_for_optimization= metric_for_optimization,
 			save_path=cfg.merge_score.save_path,
 			mts_metrics_path=cfg.mts_current_metrics_path,
 			mts_acc_tables_path=cfg.mts_current_acc_tables_path,
