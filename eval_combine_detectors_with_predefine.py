@@ -261,7 +261,18 @@ def eval_combine_multiple_detectors_with_predefine_selected_detectors(combine_de
 														   total=len(curr_top_combinations))):
 					pbar.set_postfix({'k': k, 'method': combination_method})
 
-					weights = compute_weighted_scores_based_on_predefined_top_k(window_pred_probabilities.values(), combination_method, k, merge_df=merged_df)
+					merged_df = merged_df[(merged_df['Combine Method'] == combination_method) &
+										  (merged_df['k'] == k) &
+										  (merged_df['Model Selector'] == f'{model_name}_{window_size}')
+										  ].copy()
+
+					merged_df['fname'] = merged_df['dataset'] + '/' + merged_df['filename']
+
+					top_k_detectors_dict = dict()
+					for fn in window_pred_probabilities.keys():
+						top_k_detectors_dict[fn] = merged_df[merged_df['fname'] == fn]
+
+					weights = compute_weighted_scores_based_on_predefined_top_k(window_pred_probabilities.values(), combination_method, top_k_detectors=top_k_detectors_dict.values())
 					weighted_scores, weighted_contribution_scores = combine_anomaly_scores(scores, contribution_scores, weights, plot=False)
 					metric_values_dict = {}
 					# for index, fname in enumerate(fnames_for_loading_scores):
@@ -343,7 +354,7 @@ def main(cfg: DictConfig) -> None:
 	merged_results_dir_for_first_metric = combine_detector_evaluation_config.combine_detector_results_dir_template.format(
 		mts_current_metric_for_optimization=first_metric
 	)
-	first_merged_df = pd.read_csv(os.path.join(merged_results_dir_for_first_metric, 'merged_combine_detectors_results.csv'))
+	first_merged_df = pd.read_csv(os.path.join(merged_results_dir_for_first_metric, 'merged_combine_detectors_results.csv'), index_col=0)
 	print("Load Merged results saved at:", os.path.join(merged_results_dir_for_first_metric, 'merged_combine_detectors_results.csv'))
 
 	eval_combine_multiple_detectors_with_predefine_selected_detectors(

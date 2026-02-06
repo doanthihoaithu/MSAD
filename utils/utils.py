@@ -164,10 +164,10 @@ def combine_probabilities_average(pred_probabilities, k):
 
     return all_softmax_probabilities
 
-def combine_probabilities_average_with_predefine_top_k_detectors(pred_probabilities, top_k_indices):
+def combine_probabilities_average_with_predefine_top_k_detectors(pred_probabilities, top_k_indices_list):
     all_softmax_probabilities = []
 
-    for probabilities in pred_probabilities:
+    for probabilities, top_k_indices in zip(pred_probabilities, top_k_indices_list):
         # Calculate mean of probabilities
         averaged_probabilities = np.mean(probabilities, axis=0)
 
@@ -309,15 +309,17 @@ def compute_weighted_scores(window_pred_probabilities, combination_method, k):
 
     return np.array(weights)
 
-def compute_weighted_scores_based_on_predefined_top_k(window_pred_probabilities, combination_method, k, merge_df):
-    predefined_weights_df = merge_df[merge_df['combination_method'] == combination_method & merge_df['top_k'] == k]
-    detector_columns  = multivariate_detector_names
-    detector_columns = [f'weight_{f}' for f in detector_columns]
-    selected_detector_indices = predefined_weights_df[detector_columns]
+def compute_weighted_scores_based_on_predefined_top_k(window_pred_probabilities, combination_method, top_k_detectors):
+    selected_detector_indices_list = []
+    for top_k_detector in top_k_detectors:
+        detector_columns  = multivariate_detector_names
+        detector_columns = [f'weight_{f}' for f in detector_columns]
+        selected_detector_indices = np.argwhere(top_k_detector[detector_columns].values > 0)
+        selected_detector_indices_list.append(selected_detector_indices)
     if combination_method == 'average':
-        weights = combine_probabilities_average_with_predefine_top_k_detectors(window_pred_probabilities, selected_detector_indices)
+        weights = combine_probabilities_average_with_predefine_top_k_detectors(window_pred_probabilities, selected_detector_indices_list)
     elif combination_method == 'vote':
-        weights = combine_probabilities_vote_with_predefine_top_k_detectors(window_pred_probabilities, selected_detector_indices)
+        weights = combine_probabilities_vote_with_predefine_top_k_detectors(window_pred_probabilities, selected_detector_indices_list)
     else:
         raise ValueError("Invalid combination_method. Choose either 'average' or 'vote'.")
 
