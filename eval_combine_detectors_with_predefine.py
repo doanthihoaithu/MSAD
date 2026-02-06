@@ -261,17 +261,18 @@ def eval_combine_multiple_detectors_with_predefine_selected_detectors(combine_de
 														   total=len(curr_top_combinations))):
 					pbar.set_postfix({'k': k, 'method': combination_method})
 
-					merged_df = merged_df[(merged_df['Combine Method'] == combination_method) &
+					merged_df_copy = merged_df[(merged_df['Combine Method'] == combination_method) &
 										  (merged_df['k'] == k) &
 										  (merged_df['Model Selector'] == f'{model_name}_{window_size}')
 										  ].copy()
 
-					merged_df['fname'] = merged_df['dataset'] + '/' + merged_df['filename'] + '.csv'
+					merged_df_copy['fname'] = merged_df_copy['dataset'] + '/' + merged_df_copy['filename'] + '.csv'
 
 					top_k_detectors_dict = dict()
 					for fn in window_pred_probabilities.keys():
-						top_k_detectors_dict[fn] = merged_df[merged_df['fname'] == fn]
+						top_k_detectors_dict[fn] = merged_df_copy[merged_df_copy['fname'] == fn]
 
+					# TODO make it faster
 					weights = compute_weighted_scores_based_on_predefined_top_k(window_pred_probabilities.values(), combination_method, top_k_detectors=top_k_detectors_dict.values())
 					weighted_scores, weighted_contribution_scores = combine_anomaly_scores(scores, contribution_scores, weights, plot=False)
 					metric_values_dict = {}
