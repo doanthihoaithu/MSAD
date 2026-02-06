@@ -316,6 +316,7 @@ def compute_weighted_scores_based_on_predefined_top_k(window_pred_probabilities,
         detector_columns = [f'weight_{f}' for f in detector_columns]
         selected_detector_indices = np.argwhere(top_k_detector[detector_columns].values[0] > 0)[:, 0]
         selected_detector_indices_list.append(selected_detector_indices)
+
     if combination_method == 'average':
         weights = combine_probabilities_average_with_predefine_top_k_detectors(window_pred_probabilities, selected_detector_indices_list)
     elif combination_method == 'vote':
@@ -323,8 +324,9 @@ def compute_weighted_scores_based_on_predefined_top_k(window_pred_probabilities,
     else:
         raise ValueError("Invalid combination_method. Choose either 'average' or 'vote'.")
 
-    return np.array(weights)
-
+    results = np.array(weights)
+    print('Shape of new weights', results.shape)
+    return results
 
 
 
