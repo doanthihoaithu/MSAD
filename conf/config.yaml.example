@@ -149,5 +149,7 @@ combine_detectors_evaluation:
 
   construct_baseline:
     first_metric: 'AUC_PR'
+    combine_detector_results_dir: results_mts/label_by_${mts_current_metric_for_optimization}/combine_detectors/with_${combine_detectors_evaluation.construct_baseline.first_metric}_predefine/${mts_running_dataset}
+
 
 

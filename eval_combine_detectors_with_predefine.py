@@ -282,7 +282,8 @@ def eval_combine_multiple_detectors_with_predefine_selected_detectors(combine_de
 					for metric_name, metric_values in metric_values_dict.items():
 						metric_results_df[f"{metric_name.upper()}"] = metric_values
 					results_df = pd.concat([metric_results_df, weights_df], axis=1)
-					combine_detector_results_dir = combine_detector_evaluation_config.combine_detector_results_dir
+
+					combine_detector_results_dir = combine_detector_evaluation_config.construct_baseline.combine_detector_results_dir
 					os.makedirs(combine_detector_results_dir, exist_ok=True)
 
 					experiment_dir = os.path.join(combine_detector_results_dir)
@@ -357,8 +358,7 @@ def main(cfg: DictConfig) -> None:
 	)
 
 	if combine_detector_evaluation_config.merged == True:
-		merged_results_dir = os.path.join(combine_detector_evaluation_config.combine_detector_results_dir,
-										  f'use_predefine_detectors_by_{first_metric}')
+		merged_results_dir = os.path.join(combine_detector_evaluation_config.construct_baseline.combine_detector_results_dir)
 		dfs = []
 		for filename in os.listdir(merged_results_dir):
 			pattern = re.compile(r'(?P<model_name>\w+)_(?P<window_size>\d+)_(?P<strategy>(average|vote))_(?P<top_k>\d+).csv$')
