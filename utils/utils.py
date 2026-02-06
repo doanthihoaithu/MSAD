@@ -314,7 +314,7 @@ def compute_weighted_scores_based_on_predefined_top_k(window_pred_probabilities,
     for top_k_detector in top_k_detectors:
         detector_columns  = multivariate_detector_names
         detector_columns = [f'weight_{f}' for f in detector_columns]
-        selected_detector_indices = np.argwhere(top_k_detector[detector_columns].values[0] > 0)[:, 0]
+        selected_detector_indices = np.argwhere(top_k_detector[detector_columns].values[0] > 0)[:, 0].tolist()
         selected_detector_indices_list.append(selected_detector_indices)
 
     if combination_method == 'average':
