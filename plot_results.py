@@ -5,8 +5,8 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from omegaconf import DictConfig
 
-from experiments.initial_analysis.constants import methods_conv, methods_sit, methods_ts, methods_feature, \
-    combined_detector_methods, template_names, methods_colors
+from plotting_constants import methods_colors, combined_detector_methods, methods_feature, methods_ts, methods_sit, \
+    methods_conv, template_names
 from utils.metrics_loader import MetricsLoader
 from utils.utils import get_project_root
 import seaborn as sns
@@ -75,7 +75,7 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
     plt.close()
 
 
-@hydra.main(config_path="../../conf", config_name="config.yaml")
+@hydra.main(config_path="conf", config_name="config.yaml")
 def main(config: DictConfig) -> None:
     print(config)
 
