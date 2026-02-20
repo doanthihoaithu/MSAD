@@ -58,7 +58,7 @@ def create_tmp_dataset(
 	metricsloader = MetricsLoader(metric_path)
 	metrics_data_dict = {}
 	if metric == 'all':
-		metrics_data_dict = metricsloader.read_multiple_metrics(supported_metrics_for_labeling)
+		metrics_data_dict = metricsloader.read_multiple_metrics(metricsloader.get_names())
 	else:
 		metrics_data_dict[metric.upper()] = metricsloader.read(metric.upper())
 

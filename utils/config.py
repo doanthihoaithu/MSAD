@@ -49,25 +49,35 @@ univariate_detector_names = [
 	'POLY'
 ]
 
-multivariate_detector_names = [
-    'CBLOF',
-	# 'COF',
-	'RobustPCA',
-	'COPOD',
-	'HBOS',
-	'LOF',
-	'PCC',
-	'Torsk',
-	'Random Black Forest (RR)',
-	'AutoEncoder (AE)',
-	'DenoisingAutoEncoder (DAE)'
-]
+# multivariate_detector_names = [
+#     'CBLOF',
+# 	# 'COF',
+# 	'RobustPCA',
+# 	'COPOD',
+# 	'HBOS',
+# 	'LOF',
+# 	'PCC',
+# 	'Torsk',
+# 	'Random Black Forest (RR)',
+# 	'AutoEncoder (AE)',
+# 	'DenoisingAutoEncoder (DAE)'
+# ]
+multivariate_detector_names = ['cblof',
+							   'auto_encoder',
+							   'copod',
+							   'denoising_auto_encoder',
+							   'encdec_ad',
+							   'hbos',
+							   'omni_anomaly',
+							   'random_black_forest',
+							   'tran_ad' ,
+							   'mtad_gat']
 
 # TODO fix hardcode k=2
-supported_metrics_for_labeling = ['AUC_PR',
+supported_metrics_for_labeling = ['AUC_PR', 'VUS_PR',
 								  'INTERPRETABILITY_HIT_1_SCORE',
 								  'INTERPRETABILITY_HIT_2_SCORE',
-								  'INTERPRETABILITY_HIT_3_SCORE']
+								  'INTERPRETABILITY_HIT_3_SCORE',]
 
 # Dict of model names to Constructors
 deep_models = {
