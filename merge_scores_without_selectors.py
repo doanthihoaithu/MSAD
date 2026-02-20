@@ -25,18 +25,17 @@ def main(cfg: DictConfig) -> None:
 	# 		save_path=cfg.merge_score_save_path,
 	# 	)
 	# else:
-	metrics = cfg.merge_score.metrics
+	# metrics = cfg.merge_score.metrics
 	metric_for_optimization = cfg.mts_current_metric_for_optimization
 	# Only detectors + Oracle + Avg Ens
-	for m in metrics:
-		merge_scores_mts_without_selector(
-			path=cfg.merge_score.raw_predictions_path,
-			metric=m,
-			metric_for_optimization=metric_for_optimization,
-			save_path=cfg.merge_score.save_path,
-			mts_metrics_path=cfg.mts_current_metrics_path,
-			mts_acc_tables_path=cfg.mts_current_acc_tables_path,
-		)
+	# for m in metrics:
+	merge_scores_mts_without_selector(
+		path=cfg.merge_score.raw_predictions_path,
+		metric_for_optimization=metric_for_optimization,
+		save_path=cfg.merge_score.save_path,
+		mts_metrics_path=cfg.mts_current_metrics_path,
+		mts_acc_tables_path=cfg.mts_current_acc_tables_path,
+	)
 
 if __name__ == "__main__":
 

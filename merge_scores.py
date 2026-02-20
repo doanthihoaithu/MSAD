@@ -168,88 +168,89 @@ def merge_scores_mts(path, metric, metric_for_optimization, save_path, mts_metri
 	final_df.to_csv(os.path.join(save_path, f'current_accuracy_{metric.upper()}.csv'), index=True)
 	print(final_df)
 
-def merge_scores_mts_without_selector(path, metric, metric_for_optimization, save_path, mts_metrics_path, mts_acc_tables_path):
+def merge_scores_mts_without_selector(path, metric_for_optimization, save_path, mts_metrics_path, mts_acc_tables_path):
 	# Load MetricsLoader object
 	metricsloader = MetricsLoader(mts_metrics_path)
 
 	# Check if given metric exists
-	if metric.upper() not in metricsloader.get_names():
-		raise ValueError(f'Not recognizable metric {metric}. Please use one of {metricsloader.get_names()}')
+	# if metric.upper() not in metricsloader.get_names():
+	# 	raise ValueError(f'Not recognizable metric {metric}. Please use one of {metricsloader.get_names()}')
 
 	# Read accuracy table, fix filenames & indexing, remove detectors scores
-	acc_tables_path = os.path.join(mts_acc_tables_path, "mergedTable_AUC_PR.csv")
-	acc_tables = pd.read_csv(acc_tables_path)
-	acc_tables['filename'] = acc_tables['filename'].apply(
-		lambda x: x.replace('.txt', '.out') if x.endswith('.txt') else x)
-	acc_tables.set_index(['dataset', 'filename'], inplace=True)
-	acc_tables.drop(columns=multivariate_detector_names, inplace=True)
+	for metric in metricsloader.get_names():
+		acc_tables_path = os.path.join(mts_acc_tables_path, f"mergedTable_{metric}.csv")
+		acc_tables = pd.read_csv(acc_tables_path)
+		acc_tables['filename'] = acc_tables['filename'].apply(
+			lambda x: x.replace('.txt', '.out') if x.endswith('.txt') else x)
+		acc_tables.set_index(['dataset', 'filename'], inplace=True)
+		acc_tables.drop(columns=multivariate_detector_names, inplace=True)
 
-	# Read detectors and oracles scores
-	metric_scores = metricsloader.read(metric.upper())
-	metric_scores_according_to_metric_for_optimization = metric_scores
-	if metric.upper() != metric_for_optimization:
-		metric_scores_according_to_metric_for_optimization = metricsloader.read(metric_for_optimization)
-	refactor_indexes = metric_scores.index.str.split('/')
-	refactor_indexes = ['/'.join(f[-2:]) for f in refactor_indexes]
-	metric_scores.index = refactor_indexes
-	# Read classifiers predictions, and add scores
-	# df = None
-	# scores_files = [x for x in os.listdir(path) if '.csv' in x]
-	# for file in scores_files:
-	# 	file_path = os.path.join(path, file)
-	# 	current_classifier = pd.read_csv(file_path, index_col=0)
-	# 	col_name = [x for x in current_classifier.columns if "class" in x][0]
-	#
-	# 	values = np.diag(metric_scores.loc[current_classifier.index, current_classifier.iloc[:, 0]])
-	# 	curr_df = pd.DataFrame(values, index=current_classifier.index, columns=[col_name.replace("_class", "_score")])
-	# 	curr_df = pd.merge(current_classifier[col_name], curr_df, left_index=True, right_index=True)
-	#
-	# 	if df is None:
-	# 		df = curr_df
-	# 	else:
-	# 		df = pd.merge(df, curr_df, left_index=True, right_index=True)
-	# df = df.reindex(natsorted(df.columns, key=lambda y: y.lower()), axis=1)
+		# Read detectors and oracles scores
+		metric_scores = metricsloader.read(metric.upper())
+		metric_scores_according_to_metric_for_optimization = metric_scores
+		if metric.upper() != metric_for_optimization:
+			metric_scores_according_to_metric_for_optimization = metricsloader.read(metric_for_optimization)
+		refactor_indexes = metric_scores.index.str.split('/')
+		refactor_indexes = ['/'.join(f[-2:]) for f in refactor_indexes]
+		metric_scores.index = refactor_indexes
+		# Read classifiers predictions, and add scores
+		# df = None
+		# scores_files = [x for x in os.listdir(path) if '.csv' in x]
+		# for file in scores_files:
+		# 	file_path = os.path.join(path, file)
+		# 	current_classifier = pd.read_csv(file_path, index_col=0)
+		# 	col_name = [x for x in current_classifier.columns if "class" in x][0]
+		#
+		# 	values = np.diag(metric_scores.loc[current_classifier.index, current_classifier.iloc[:, 0]])
+		# 	curr_df = pd.DataFrame(values, index=current_classifier.index, columns=[col_name.replace("_class", "_score")])
+		# 	curr_df = pd.merge(current_classifier[col_name], curr_df, left_index=True, right_index=True)
+		#
+		# 	if df is None:
+		# 		df = curr_df
+		# 	else:
+		# 		df = pd.merge(df, curr_df, left_index=True, right_index=True)
+		# df = df.reindex(natsorted(df.columns, key=lambda y: y.lower()), axis=1)
 
-	# Add Oracle (TRUE_ORACLE-100) and Averaging Ensemble
-	df = metric_scores[["TRUE_ORACLE-100", "AVG_ENS"] + multivariate_detector_names]
-	df.rename(columns={'TRUE_ORACLE-100': 'Oracle', 'AVG_ENS': 'Avg Ens'}, inplace=True)
+		# Add Oracle (TRUE_ORACLE-100) and Averaging Ensemble
+		df = metric_scores[["TRUE_ORACLE-100", "AVG_ENS"] + multivariate_detector_names]
+		df.rename(columns={'TRUE_ORACLE-100': 'Oracle', 'AVG_ENS': 'Avg Ens'}, inplace=True)
 
-	# Add true labels from AUC_PR metrics
-	# if metric.upper() in ['AUC_PR', 'VUS_PR']:
-	# 	auc_pr_detectors_scores = metricsloader.read('AUC_PR')[multivariate_detector_names]
-	# elif metric.upper().startswith('INTERPRETABILITY'):
-	# 	print(f'Reading interpretability metric {metric}, labeling by idxmax({metric})')
-	# 	auc_pr_detectors_scores = metricsloader.read(metric)[multivariate_detector_names]
-	# else:
-	# 	auc_pr_detectors_scores = metricsloader.read('AUC_PR')[multivariate_detector_names]
-	detectors_scores_by_metric = metric_scores_according_to_metric_for_optimization[multivariate_detector_names]
-	refactor_indexes = detectors_scores_by_metric.index.str.split('/')
-	refactor_indexes = ['/'.join(f[-2:]) for f in refactor_indexes]
-	detectors_scores_by_metric.index = refactor_indexes
-	labels = detectors_scores_by_metric.idxmax(axis=1).to_frame(name=f'label_by_{metric_for_optimization}')
-	recompute_corresponding_oracle = np.diag(metric_scores.loc[df.index, labels.loc[df.index].iloc[:,0]])
-	recompute_corresponding_oracle_df = pd.DataFrame(recompute_corresponding_oracle, index=df.index, columns=['Oracle_new'])
-	labels = pd.merge(labels, recompute_corresponding_oracle_df, left_index=True, right_index=True)
-	df = pd.merge(labels, df, left_index=True, right_index=True)
+		# Add true labels from AUC_PR metrics
+		# if metric.upper() in ['AUC_PR', 'VUS_PR']:
+		# 	auc_pr_detectors_scores = metricsloader.read('AUC_PR')[multivariate_detector_names]
+		# elif metric.upper().startswith('INTERPRETABILITY'):
+		# 	print(f'Reading interpretability metric {metric}, labeling by idxmax({metric})')
+		# 	auc_pr_detectors_scores = metricsloader.read(metric)[multivariate_detector_names]
+		# else:
+		# 	auc_pr_detectors_scores = metricsloader.read('AUC_PR')[multivariate_detector_names]
+		detectors_scores_by_metric = metric_scores_according_to_metric_for_optimization[multivariate_detector_names]
+		refactor_indexes = detectors_scores_by_metric.index.str.split('/')
+		refactor_indexes = ['/'.join(f[-2:]) for f in refactor_indexes]
+		detectors_scores_by_metric.index = refactor_indexes
+		labels = detectors_scores_by_metric.idxmax(axis=1).to_frame(name=f'label_by_{metric_for_optimization}')
+		recompute_corresponding_oracle = np.diag(metric_scores.loc[df.index, labels.loc[df.index].iloc[:,0]])
+		recompute_corresponding_oracle_df = pd.DataFrame(recompute_corresponding_oracle, index=df.index, columns=['Oracle_new'])
+		labels = pd.merge(labels, recompute_corresponding_oracle_df, left_index=True, right_index=True)
+		df = pd.merge(labels, df, left_index=True, right_index=True)
 
-	# Change the indexes to dataset, filename
-	old_indexes = df.index.tolist()
-	old_indexes_split = [tuple(x.split('/')) for x in old_indexes]
-	filenames_df = pd.DataFrame(old_indexes_split, index=old_indexes, columns=['dataset', 'filename'])
-	df = pd.merge(df, filenames_df, left_index=True, right_index=True)
-	df = df.set_index(keys=['dataset', 'filename'])
+		# Change the indexes to dataset, filename
+		old_indexes = df.index.tolist()
+		old_indexes_split = [tuple(x.split('/')) for x in old_indexes]
+		filenames_df = pd.DataFrame(old_indexes_split, index=old_indexes, columns=['dataset', 'filename'])
+		df = pd.merge(df, filenames_df, left_index=True, right_index=True)
+		df = df.set_index(keys=['dataset', 'filename'])
 
-	# Merge the two dataframes now that they have common indexes
-	final_df = df.join(acc_tables)
-	indexes_not_found = final_df[final_df.iloc[:, -len(acc_tables.columns):].isna().any(axis=1)].index.tolist()
-	print('Indexes not found in acc_tables file:')
-	[print(i, x) for i, x in enumerate(indexes_not_found)]
+		# Merge the two dataframes now that they have common indexes
+		final_df = df.join(acc_tables)
+		indexes_not_found = final_df[final_df.iloc[:, -len(acc_tables.columns):].isna().any(axis=1)].index.tolist()
+		print('Indexes not found in acc_tables file:')
+		[print(i, x) for i, x in enumerate(indexes_not_found)]
 
-	# Save the final dataframe
-	os.makedirs(save_path, exist_ok=True)
-	final_df.to_csv(os.path.join(save_path, f'total_accuracy_{metric.upper()}.csv'), index=True)
-	print(f'Successfully save merged scores to {save_path}')
-	print(final_df)
+		# Save the final dataframe
+		os.makedirs(save_path, exist_ok=True)
+		final_df.to_csv(os.path.join(save_path, f'total_accuracy_{metric.upper()}.csv'), index=True)
+		print(f'Successfully save merged scores to {save_path}')
+		print(final_df)
 
 def merge_inference_times(path, save_path, detector_execution_time_path):
 	# detectors_inf_time_path = ('results_mts/execution_time/detectors_inference_time.csv')
