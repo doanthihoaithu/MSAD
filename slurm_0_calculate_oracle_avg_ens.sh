@@ -14,4 +14,5 @@ module load python
 source /home/doan/projects/ibm_scripts/torch210/bin/activate
 python run_oracle.py
 python run_ave_ens.py
+python merge_scores_without_selectors.py
 deactivate
