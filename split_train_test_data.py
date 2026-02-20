@@ -38,8 +38,15 @@ def train_test_split_customized(filenames, labels, labelled_metric, data_dir, tr
     print("Saved train-test split to:", save_file)
     label_distribution_df = pd.DataFrame(labels).value_counts().to_frame('count').reset_index()
     label_distribution_df.columns = ['label', 'count']
+    label_distribution_in_train_df = pd.DataFrame(train_labels).value_counts().to_frame('count').reset_index()
+    label_distribution_in_train_df.columns = ['label', 'count']
+    label_distribution_in_test_df = pd.DataFrame(test_labels).value_counts().to_frame('count').reset_index()
+    label_distribution_in_test_df.columns = ['label', 'count']
+    label_distribution_df = label_distribution_df.merge(label_distribution_in_train_df, on='label', how='left', suffixes=('', '_train'))
+    label_distribution_df = label_distribution_df.merge(label_distribution_in_test_df, on='label', how='left', suffixes=('', '_test'))
     label_distribution_df.to_csv(os.path.join(save_dir, 'label_distribution.csv'), index=False)
     print(f'Saved label distribution to {os.path.join(save_dir, "label_distribution.csv")}')
+    print(f'Label distribution:\n{label_distribution_df}')
 
 @hydra.main(config_path="./conf", config_name="config.yaml")
 def main(config: DictConfig):
