@@ -211,8 +211,8 @@ class ScoresLoader:
 		per_var_contribution = []
 		for i, name in enumerate(tqdm(file_names, desc='Loading scores')):
 			name_split = name.split('/')[-2:]
-			paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', name_split[1]) for detector in detectors]
-			contribution_per_var_paths = [os.path.join(self.scores_path, name_split[0], detector, 'score', f'{name_split[1]}.dimension_contribution') for detector in
+			paths = [os.path.join(self.scores_path, name_split[0], detector, name_split[1]) for detector in detectors]
+			contribution_per_var_paths = [os.path.join(self.scores_path, name_split[0], detector, f'{name_split[1]}.dimension_contribution') for detector in
 					 detectors]
 			data = []
 			contribution_per_var_data = []

@@ -106,7 +106,9 @@ class DataLoader:
 		pbar = tqdm(dataset)
 		for name in pbar:
 			pbar.set_description('Loading ' + name)
-			for fname, fname_multivariate_labels in zip(glob.glob(os.path.join(self.data_path, name, '*.out')), glob.glob(os.path.join(self.data_path, name, '*.out.multivariate_labels'))):
+			fnames_tmp = glob.glob(os.path.join(self.data_path, name, '*.out'))
+			fnames_multivariate_labels_tmp = [f.replace('.out', '.out.multivariate_labels') for f in fnames_tmp]
+			for fname, fname_multivariate_labels in zip(fnames_tmp, fnames_multivariate_labels_tmp):
 				curr_data = pd.read_csv(fname, header=None).to_numpy()
 				curr_multivariate_label_data = pd.read_csv(fname_multivariate_labels, header=None).to_numpy()
 
