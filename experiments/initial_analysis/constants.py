@@ -1,0 +1,124 @@
+methods_colors = {
+    "oracle": "#FFFFFF",
+    "avg_ens": "#FF7133",
+    "best_ms": "#33D4FF",
+    "detectors": "#CCCCCC",
+    "feature_based": "#91AAC2",
+    "sit": "#FFB522",
+    "conv": "#4494FF",
+    "conv_2": "#0048FF",
+    "rocket": "#EA7DFF",
+    "best_ad_train": "#228B22",
+    "worst_ad_test": "#8B0000",
+}
+
+combined_detector_methods = ['auc_pr_vote_4', 'auc_pr_average_4']
+
+methods_conv = [
+    'inception_time_{}',
+    'convnet_{}',
+    'resnet_{}',]
+
+methods_sit = [
+    'sit_conv_patch_{}',
+    'sit_linear_patch_{}',
+    'sit_stem_original_{}',
+    'sit_stem_relu_{}',]
+
+methods_ts = ['rocket_{}']
+
+methods_feature = [
+    'ada_boost_{}',
+    'knn_{}',
+    'decision_tree_{}',
+    'random_forest_{}',
+    'mlp_{}',
+    'bayes_{}',
+    'qda_{}',
+    'svc_linear_{}']
+
+# old_methods = ['IFOREST', 'LOF', 'MP', 'NORMA', 'IFOREST1', 'HBOS', 'OCSVM','PCA', 'AE', 'CNN', 'LSTM', 'POLY']
+
+#old_methods = ['CBLOF', 'RobustPCA', 'COPOD', 'HBOS', 'LOF', 'PCC', 'AutoEncoder (AE)', 'DenoisingAutoEncoder (DAE)', 'Torsk', 'Random Black Forest (RR)']
+# old_methods=['cblof', 'auto_encoder', 'copod', 'denoising_auto_encoder', 'encdec_ad', 'hbos', 'omni_anomaly', 'random_black_forest', 'tran_ad', 'mtad_gat' ]
+
+Base_methods = ['Avg Ens','Oracle']
+
+template_names = {
+        'auc_pr_vote_4': 'Vote-4',
+        'auc_pr_average_4': 'Avg-4',
+        'inception_time_{}': 'InceptTime-{}',
+        'convnet_{}': 'ConvNet-{}',
+        'resnet_{}': 'ResNet-{}',
+        'sit_conv_patch_{}': 'SiT-conv-patch-{}',
+        'sit_linear_patch_{}': 'SiT-linear-patch-{}',
+        'sit_stem_original_{}': 'SiT-stem-original-{}',
+        'sit_stem_relu_{}': 'SiT-stem-ReLU-{}',
+        'rocket_{}': 'Rocket-{}',
+        'ada_boost_{}': 'AdaBoost-{}',
+        'knn_{}': 'kNN-{}',
+        'decision_tree_{}': 'DecisionTree-{}',
+        'random_forest_{}': 'RandomForest-{}',
+        'mlp_{}': 'MLP-{}',
+        'bayes_{}': 'Bayes-{}',
+        'qda_{}': 'QDA-{}',
+        'svc_linear_{}': 'SVC-{}',
+        'IFOREST': 'IForest',
+        'LOF': 'LOF',
+        'MP': 'MP',
+        'NORMA': 'NormA',
+        'IFOREST1': 'IForest1',
+
+        'CBLOF': 'CBLOF',
+        'cblof': 'CBLOF',
+        'COF': 'COF',
+        'RobustPCA': 'RobustPCA',
+        'COPOD': 'COPOD',
+        'copod': 'COPOD',
+        'PCC': 'PCC',
+        'HBOS': 'HBOS',
+        'hbos': 'HBOS',
+        'OCSVM': 'OCSVM',
+        'PCA': 'PCA',
+        'Torsk': 'TORSK',
+        'tran_ad': 'TranAD',
+        # 'AE': 'AE',
+        'AutoEncoder (AE)': 'AE',
+        'auto_encoder': 'AE',
+        'DenoisingAutoEncoder (DAE)': 'DAE',
+        'denoising_auto_encoder': 'DAE',
+        'encdec_ad': 'EncDec-AD',
+        'Random Black Forest (RR)': 'RBF',
+        'random_black_forest': 'RBF',
+        'omni_anomaly': 'OmniAnomaly',
+        'mtad_gat': 'MTAD-GAT',
+        'CNN': 'CNN',
+        'LSTM': 'LSTM',
+        'POLY': 'POLY',
+        'Avg Ens': 'Avg Ens',
+        'Oracle': 'Oracle',
+        'VUS_PR': 'VUS-PR',
+        'label': 'Label',
+        'best_ms': 'Best MS',
+        'convnet': 'ConvNet',
+        'resnet': 'ResNet',
+        'rocket': 'Rocket',
+        'knn': 'kNN',
+        'sit_stem': 'SiT-stem',
+        'sit': 'SiT',
+        'feature_based': 'Feature-based',
+        'AUC_PR': 'AUC-PR',
+        'AUC_ROC': 'AUC-ROC',
+        'VUS_ROC': 'VUS_ROC',
+        'INTERPRETABILITY_LOG_SCORE': 'INTERPRETABILITY_LOG_SCORE',
+        'INTERPRETABILITY_HIT_1_SCORE': 'HIT_1_SCORE',
+        'INTERPRETABILITY_HIT_2_SCORE': 'HIT_2_SCORE',
+        'INTERPRETABILITY_HIT_3_SCORE': 'HIT_3_SCORE',
+        'INTERPRETABILITY_HIT_4_SCORE': 'HIT_4_SCORE',
+        'INTERPRETABILITY_HIT_5_SCORE': 'HIT_5_SCORE',
+        'INTERPRETABILITY_HIT_6_SCORE': 'HIT_6_SCORE',
+        'INTERPRETABILITY_HIT_7_SCORE': 'HIT_7_SCORE',
+        'INTERPRETABILITY_HIT_8_SCORE': 'HIT_8_SCORE',
+        'INTERPRETABILITY_HIT_9_SCORE': 'HIT_9_SCORE',
+        'INTERPRETABILITY_HIT_10_SCORE': 'HIT_10_SCORE',
+    }

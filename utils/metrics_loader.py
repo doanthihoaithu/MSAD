@@ -44,8 +44,18 @@ class MetricsLoader:
 		# for elem in result:
 		# 	if result[elem] != n_detectors:
 		# 		raise ValueError('metrics occurances do not match for all detectors {}'.format(result))
+		metric_names = list(result.keys())
+		sorted_metric_names = []
+		if 'AUC_PR' in metric_names:
+			sorted_metric_names.append('AUC_PR')
+			metric_names.remove('AUC_PR')
+		if 'VUS_PR' in metric_names:
+			sorted_metric_names.append('VUS_PR')
+			metric_names.remove('VUS_PR')
 
-		return list(result.keys())
+		metric_names = sorted(metric_names, reverse=False)
+		sorted_metric_names.extend(metric_names)
+		return sorted_metric_names
 
 	
 	def read(self, metric):
