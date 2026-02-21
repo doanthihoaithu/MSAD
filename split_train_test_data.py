@@ -45,9 +45,16 @@ def train_test_split_customized(filenames, labels, labelled_metric, data_dir, tr
     label_distribution_df = label_distribution_df.merge(label_distribution_in_train_df, on='label', how='left', suffixes=('', '_train'))
     label_distribution_df = label_distribution_df.merge(label_distribution_in_test_df, on='label', how='left', suffixes=('', '_test'))
     label_distribution_df.to_csv(os.path.join(save_dir, 'label_distribution.csv'), index=False)
-    print(f'Saved label distribution to {os.path.join(save_dir, "label_distribution.csv")}')
+
     print(f'Label distribution:\n{label_distribution_df}')
 
+def get_detector_label_for_batch(batch_id,label_df, current_working_dataset):
+    # label_df['batch_id'] = "_".join(label_df.index.str.replace('.out', '').split('_')[-2])
+    batch_id = f'custom/{current_working_dataset}/synthetic_{batch_id}.out'
+    if batch_id in label_df.index:
+        return label_df.loc[batch_id]
+    else:
+        return np.nan
 @hydra.main(config_path="./conf", config_name="config.yaml")
 def main(config: DictConfig):
     print(config)
@@ -59,6 +66,10 @@ def main(config: DictConfig):
     metrics_dir = config.mts_current_metrics_path
     mts_supported_detectors = config.mts_supported_detectors
     print(f'mts_supported_detectors: {mts_supported_detectors}')
+
+    history_dir = os.path.join(os.path.dirname(msad_mts_data_dir), 'history')
+    history_df = pd.read_csv(os.path.join(history_dir, 'generation_history.csv'))
+    print(f'Generation history:\n{history_df.shape}')
 
     if metric_for_labeling_windows != 'all':
 
@@ -79,6 +90,7 @@ def main(config: DictConfig):
         combined_labelled_metric_df.dropna(inplace=True)
         labels = combined_labelled_metric_df[mts_supported_detectors].idxmax(axis=1)
         print(pd.DataFrame(labels).value_counts())
+        history_df[f'label_by_{metric_for_labeling_windows}'] = history_df['batch_id'].map(lambda x: get_detector_label_for_batch(x, labels, current_working_dataset))
         # for window_size in window_sizes:
         train_test_split_customized(combined_labelled_metric_df.index.str.replace('.out', '.out.csv').tolist(), labels, metric_for_labeling_windows.upper(), msad_mts_data_dir,
                                     train_ratio=0.5)
@@ -103,12 +115,15 @@ def main(config: DictConfig):
             combined_labelled_metric_df.dropna(inplace=True)
             labels = combined_labelled_metric_df[mts_supported_detectors].idxmax(axis=1)
             print(pd.DataFrame(labels).value_counts())
+            history_df[f'label_by_{metric_for_labeling_windows}'] = history_df['batch_id'].map(
+                lambda x: get_detector_label_for_batch(x, labels, current_working_dataset))
             # for window_size in window_sizes:
             train_test_split_customized(combined_labelled_metric_df.index.str.replace('.out', '.out.csv').tolist(),
                                         labels, metric_for_labeling_windows.upper(), msad_mts_data_dir,
                                         train_ratio=0.5)
 
-
+    history_df.to_csv(os.path.join(history_dir, 'generation_history_with_labels.csv'), index=False)
+    print(f'Saved generation history with labels to {os.path.join(history_dir, "generation_history_with_labels.csv")}')
 
 if __name__ == '__main__':
     main()
