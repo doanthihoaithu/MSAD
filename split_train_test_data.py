@@ -97,7 +97,7 @@ def main(config: DictConfig):
         for discarded_label in discarded_labels:
             if discarded_label in label_df['label'].values:
                 indices = label_df[label_df['label'] == discarded_label].index
-                discarded_indices = np.random.choice(indices, size=0 if len(indices) <= 5 else (len(indices) - 5),
+                discarded_indices = np.random.choice(indices, size=0 if len(indices) <= 50 else (len(indices) - 50),
                                                      replace=False)
                 # combined_labelled_metric_df.drop(discarded_indices, inplace=True)
                 discarded_index_set.update(discarded_indices)
@@ -141,7 +141,7 @@ def main(config: DictConfig):
             for discarded_label in discarded_labels:
                 if discarded_label in label_df['label'].values:
                     indices = label_df[label_df['label'] == discarded_label].index
-                    discarded_indices = np.random.choice(indices, size=0 if len(indices) <= 100 else (len(indices)-100), replace=False)
+                    discarded_indices = np.random.choice(indices, size=0 if len(indices) <= 50 else (len(indices)-50), replace=False)
                     # combined_labelled_metric_df.drop(discarded_indices, inplace=True)
                     discarded_index_set.update(discarded_indices)
             # label_df = label_df.loc[list(discarded_index_set), :]
