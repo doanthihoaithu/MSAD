@@ -112,7 +112,7 @@ def main(config: DictConfig):
         # for window_size in window_sizes:
         train_test_split_customized(label_df.index.str.replace('.out', '.out.csv').tolist(),
                                     label_df['label'], metric_for_labeling_windows.upper(), msad_mts_data_dir,
-                                    train_ratio=0.5)
+                                    train_ratio=0.3)
     else:
         metricsloader = MetricsLoader(metrics_dir)
         available_metrics = metricsloader.get_names()
@@ -157,7 +157,7 @@ def main(config: DictConfig):
             # for window_size in window_sizes:
             train_test_split_customized(label_df.index.str.replace('.out', '.out.csv').tolist(),
                                         label_df['label'], metric_for_labeling_windows.upper(), msad_mts_data_dir,
-                                        train_ratio=0.5)
+                                        train_ratio=0.3)
 
     history_df.to_csv(os.path.join(history_dir, 'generation_history_with_labels.csv'), index=False)
     print(f'Saved generation history with labels to {os.path.join(history_dir, "generation_history_with_labels.csv")}')
