@@ -12,7 +12,7 @@ from utils.utils import get_project_root
 import seaborn as sns
 
 
-def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_dir, save_dir):
+def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_dir, save_dir, test_filenames):
 
     plt.rcParams.update({'font.size': 18})
     # plt.figure(figsize=(10, 5*len(measure_names)))
@@ -21,11 +21,13 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
     figure, axis = plt.subplots(figsize=(10, 5*len(measure_names)), nrows=len(measure_names), ncols=1)
 
     project_root_dir = get_project_root()
+    test_filenames = [f.split('/')[1].replace('.out.csv', '.out') for f in test_filenames]
     for i, measure_name in enumerate(measure_names):
         total_of_metric_file_name = f'total_accuracy_{measure_name}.csv'
         total_of_metric_file_path = os.path.join(project_root_dir, results_dir, total_of_metric_file_name)
 
         df = pd.read_csv(total_of_metric_file_path)
+        df = df[df['filename'].isin(test_filenames)]
         # df = pd.read_csv(
         #     f'../../results_mts/label_by_{mts_current_metric_for_optimization}/merged_scores/{current_dataset}/total_accuracy_{measure_name}.csv')
         # df = pd.merge(df, df_average, on=['dataset', 'filename'], how='left')
@@ -86,6 +88,10 @@ def main(config: DictConfig) -> None:
     results_dir = config.merge_score.save_path
     mts_current_metrics_path = os.path.join(project_root_dir, config.mts_current_metrics_path)
     metricsloader = MetricsLoader(mts_current_metrics_path)
+    train_test_split_file = os.path.join(project_root_dir, config.split_train_test.file)
+    train_test_split_df = pd.read_csv(train_test_split_file, index_col=0)
+    test_filenames = train_test_split_df.loc['val_set'].values
+    print(test_filenames)
 
     measure_names = metricsloader.get_names()
 
@@ -129,7 +135,7 @@ def main(config: DictConfig) -> None:
     plot_save_dir = os.path.join(project_root_dir, config.merge_score.save_path, 'plots')
     os.makedirs(plot_save_dir, exist_ok=True)
 
-    plot_result_boxplot_dataset(detectors, final_names, measure_names, results_dir, plot_save_dir)
+    plot_result_boxplot_dataset(detectors, final_names, measure_names, results_dir, plot_save_dir, test_filenames)
 
 if __name__ == '__main__':
     main()

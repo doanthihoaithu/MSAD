@@ -66,6 +66,10 @@ create_windows_dataset:
   path: ${mts_current_data_path}
   metric_path: ${mts_current_metrics_path}
 
+split_train_test:
+  file: ${mts_working_folder}/supervised_splits/label_by_${mts_current_metric_for_optimization}/train_test_split.csv
+  file_template: ${mts_working_folder}/supervised_splits/label_by_{mts_current_metric_for_optimization}/train_test_split.csv
+
 generate_features:
   mode: 'all' # 'single' or 'all'
   metric_for_labeling_windows: ${metric_for_labeling_windows}

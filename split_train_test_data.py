@@ -89,10 +89,29 @@ def main(config: DictConfig):
         combined_labelled_metric_df['dataset'] = current_working_dataset
         combined_labelled_metric_df.dropna(inplace=True)
         labels = combined_labelled_metric_df[mts_supported_detectors].idxmax(axis=1)
-        print(pd.DataFrame(labels).value_counts())
+        label_df = labels.to_frame('label')
+        # print(label_df.head())
+        print(label_df.shape)
+        discarded_labels = ['tran_ad', 'auto_encoder', 'random_black_forest']
+        discarded_index_set = set()
+        for discarded_label in discarded_labels:
+            if discarded_label in label_df['label'].values:
+                indices = label_df[label_df['label'] == discarded_label].index
+                discarded_indices = np.random.choice(indices, size=0 if len(indices) <= 5 else (len(indices) - 5),
+                                                     replace=False)
+                # combined_labelled_metric_df.drop(discarded_indices, inplace=True)
+                discarded_index_set.update(discarded_indices)
+        # label_df = label_df.loc[list(discarded_index_set), :]
+        label_df.drop(index=list(discarded_index_set), inplace=True)
+        print(f'After discarding some labels, label distribution for labeling windows:')
+        print(label_df.index.unique())
+
+        print('Label distribution for labeling windows:')
+        print(pd.DataFrame(labels).value_counts().to_frame('count').reset_index().rename(columns={'index': 'label'}))
         history_df[f'label_by_{metric_for_labeling_windows}'] = history_df['batch_id'].map(lambda x: get_detector_label_for_batch(x, labels, current_working_dataset))
         # for window_size in window_sizes:
-        train_test_split_customized(combined_labelled_metric_df.index.str.replace('.out', '.out.csv').tolist(), labels, metric_for_labeling_windows.upper(), msad_mts_data_dir,
+        train_test_split_customized(label_df.index.str.replace('.out', '.out.csv').tolist(),
+                                    label_df['label'], metric_for_labeling_windows.upper(), msad_mts_data_dir,
                                     train_ratio=0.5)
     else:
         metricsloader = MetricsLoader(metrics_dir)
@@ -114,12 +133,30 @@ def main(config: DictConfig):
             combined_labelled_metric_df['dataset'] = current_working_dataset
             combined_labelled_metric_df.dropna(inplace=True)
             labels = combined_labelled_metric_df[mts_supported_detectors].idxmax(axis=1)
-            print(pd.DataFrame(labels).value_counts())
+            label_df = labels.to_frame('label')
+            # print(label_df.head())
+            print(label_df.shape)
+            discarded_labels = ['tran_ad', 'auto_encoder', 'random_black_forest']
+            discarded_index_set = set()
+            for discarded_label in discarded_labels:
+                if discarded_label in label_df['label'].values:
+                    indices = label_df[label_df['label'] == discarded_label].index
+                    discarded_indices = np.random.choice(indices, size=0 if len(indices) <= 100 else (len(indices)-100), replace=False)
+                    # combined_labelled_metric_df.drop(discarded_indices, inplace=True)
+                    discarded_index_set.update(discarded_indices)
+            # label_df = label_df.loc[list(discarded_index_set), :]
+            label_df.drop(index=list(discarded_index_set), inplace=True)
+            print(f'After discarding some labels, label distribution for labeling windows:')
+            print(label_df.index.nunique())
+
+
+            print('Label distribution for labeling windows:')
+            print(label_df['label'].value_counts().to_frame('count').reset_index().rename(columns={'index': 'label'}))
             history_df[f'label_by_{metric_for_labeling_windows}'] = history_df['batch_id'].map(
                 lambda x: get_detector_label_for_batch(x, labels, current_working_dataset))
             # for window_size in window_sizes:
-            train_test_split_customized(combined_labelled_metric_df.index.str.replace('.out', '.out.csv').tolist(),
-                                        labels, metric_for_labeling_windows.upper(), msad_mts_data_dir,
+            train_test_split_customized(label_df.index.str.replace('.out', '.out.csv').tolist(),
+                                        label_df['label'], metric_for_labeling_windows.upper(), msad_mts_data_dir,
                                         train_ratio=0.5)
 
     history_df.to_csv(os.path.join(history_dir, 'generation_history_with_labels.csv'), index=False)
