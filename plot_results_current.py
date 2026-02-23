@@ -12,7 +12,7 @@ from utils.utils import get_project_root
 import seaborn as sns
 
 
-def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_dir, save_dir, test_filenames):
+def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_dir, save_dir, test_filenames, all_methods_ens):
 
     plt.rcParams.update({'font.size': 18})
     # plt.figure(figsize=(10, 5*len(measure_names)))
@@ -41,9 +41,9 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
         print(df.columns, df.shape)
 
         # Calculate the mean performance for each Model Selector (MS)
-        # method_means = df[[x for x in all_methods_ens if x in df.columns]].mean()
-        # best_ms = method_means.idxmax() # Best MS may differ since results are may slightly vary (although distributions are solid)
-        best_ms = 'xxx'
+        method_means = df[[x for x in all_methods_ens if x in df.columns]].mean()
+        best_ms = method_means.idxmax() # Best MS may differ since results are may slightly vary (although distributions are solid)
+        # best_ms = 'xxx'
         #     best_ms = 'resnet_1024' # Best model selector at the time publishing of our paper
         #     print(f"Best Model Selector (MS) is: {final_names[best_ms]}")
 
@@ -51,7 +51,7 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
         old_method_order = df[detectors].median().sort_values(ascending=False).index.tolist()[::-1]
         my_pal = {method: methods_colors["detectors"] for method in old_method_order}
         my_pal = {**my_pal, **{"Avg Ens": methods_colors["avg_ens"],
-                               # best_ms: methods_colors["best_ms"],
+                               best_ms: methods_colors["best_ms"],
                                'Oracle': methods_colors["oracle"]}}
 
         tmp_methods = old_method_order + ['Avg Ens', 'Oracle']
@@ -135,7 +135,7 @@ def main(config: DictConfig) -> None:
     plot_save_dir = os.path.join(project_root_dir, config.merge_score.save_path, 'plots')
     os.makedirs(plot_save_dir, exist_ok=True)
 
-    plot_result_boxplot_dataset(detectors, final_names, measure_names, results_dir, plot_save_dir, test_filenames)
+    plot_result_boxplot_dataset(detectors, final_names, measure_names, results_dir, plot_save_dir, test_filenames, all_methods)
 
 if __name__ == '__main__':
     main()
