@@ -195,7 +195,7 @@ def main(cfg: DictConfig) -> None:
 		for window_size in window_sizes:
 			print(f'\n\nRunning Feature-Based Classifiers for window size: {window_size}\n')
 			path = config.path_template.format(current_window_size=window_size)
-			file = config.file_template.format(current_window_size=window_size)
+			file = config.read_from_file
 			for classifier in clf_list:
 				train_feature_based(
 					data_path=path,
