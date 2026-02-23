@@ -91,12 +91,17 @@ def train_deep_model(
 
 	# Read models parameters
 	model_parameters = json_file(model_parameters_file)
+	model_parameters
 	
 	# Change input size according to input
 	if 'original_length' in model_parameters:
 		model_parameters['original_length'] = window_size
 	if 'timeseries_size' in model_parameters:
 		model_parameters['timeseries_size'] = window_size
+	if 'original_dim' in model_parameters:
+		model_parameters['original_dim'] = num_dimensions
+	if 'in_channels' in model_parameters:
+		model_parameters['in_channels'] = num_dimensions
 	
 	# Create the model, load it on GPU and print it
 	model = deep_models[model_name.lower()](**model_parameters).to(device)
