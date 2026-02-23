@@ -116,7 +116,7 @@ model_selection:
     model_name: 'all'  #['all', 'resnet_default', 'convnet_default', 'inception_time_default', 'sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
     model_parameters_file: models/configuration/${model_selection.deep_model_config.model_name}.json
     batch_size: 128
-    epochs: 100
+    epochs: 30
     eval_model: true
     path_model_save: ${mts_model_weights_dir}
     save_done_training: ${mts_save_done_training_dir}
