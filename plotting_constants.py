@@ -15,9 +15,9 @@ methods_colors = {
 combined_detector_methods = ['auc_pr_vote_4', 'auc_pr_average_4']
 
 methods_conv = [
-    'inception_time_{}',
-    'convnet_{}',
-    'resnet_{}',]
+    'inception_time_default_{}',
+    'convnet_default_{}',
+    'resnet_default_{}',]
 
 methods_sit = [
     'sit_conv_patch_{}',
