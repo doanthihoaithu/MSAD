@@ -113,7 +113,7 @@ model_selection:
 #    read_from_file: ${generate_features.path}/supervised_splits/train_test_split.csv
     read_from_file: ${split_train_test.file}
     read_from_file_template: ${split_train_test.file_template}
-    model_name: 'sit_stem_relu'  #['all', 'resnet_default', 'convnet_default', 'inception_time_default', 'sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
+    model_name: 'all'  #['all', 'resnet_default', 'convnet_default', 'inception_time_default', 'sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
     model_parameters_file: models/configuration/${model_selection.deep_model_config.model_name}.json
     batch_size: 128
     epochs: 100
