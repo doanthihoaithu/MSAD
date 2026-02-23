@@ -42,6 +42,9 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
 
         # Calculate the mean performance for each Model Selector (MS)
         method_means = df[[x for x in all_methods_ens if x in df.columns]].mean()
+        print(df.columns)
+        print(all_methods_ens)
+        print('Selectors:',method_means )
         best_ms = method_means.idxmax() # Best MS may differ since results are may slightly vary (although distributions are solid)
         # best_ms = 'xxx'
         #     best_ms = 'resnet_1024' # Best model selector at the time publishing of our paper
