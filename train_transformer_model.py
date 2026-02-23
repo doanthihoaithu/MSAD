@@ -179,9 +179,9 @@ def main(cfg: DictConfig) -> None:
 				for window_size in window_sizes:
 					# model_parameters_file = train_deep_model_config.model_parameters_file
 
-					print(f'\n\n\nTraining model: {model_name} for window size: {window_size}\n\n\n')
+					# print(f'\n\n\nTraining model: {model_name} for window size: {window_size}\n\n\n')
 					data_path = train_deep_model_config.data_path_template.format(current_window_size=window_size)
-					split_file = train_deep_model_config.read_from_file_template.format(current_window_size=window_size)
+					split_file = train_deep_model_config.read_from_file
 					train_deep_model(
 						data_path=data_path,
 						num_dimensions=train_deep_model_config.num_dimensions,
