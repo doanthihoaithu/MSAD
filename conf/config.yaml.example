@@ -125,7 +125,7 @@ model_selection:
 merge_score:
   mts: true
 #  metrics: ['interpretability_log_score', 'interpretability_hit_2_score', 'vus_pr', 'auc_pr' ]
-  metrics: ['interpretability_hit_2_score', 'vus_pr', 'auc_pr' ]
+  metrics: ['interpretability_hit_2_score','interpretability_hit_1_score', 'vus_pr', 'auc_pr' ]
 # ['vus_roc', 'vus_pr', 'auc_roc', 'auc_pr', 'interpretability_log_score', 'interpretability_hit_2_score']
   save_path: results_mts/label_by_${mts_current_metric_for_optimization}/merged_scores/${mts_running_dataset}
   raw_predictions_path: results_mts/label_by_${mts_current_metric_for_optimization}/raw_predictions/${mts_running_dataset}
