@@ -117,7 +117,7 @@ def train_deep_model(
 		criterion=nn.CrossEntropyLoss(weight=class_weights).to(device),
 		runs_dir=save_runs,
 		weights_dir=save_weights,
-		learning_rate=0.00001
+		learning_rate=0.00001,
 	)
 
 	# Check device of torch
@@ -189,7 +189,7 @@ def main(cfg: DictConfig) -> None:
 
 					print(f'\n\n\nTraining model: {model_name} for window size: {window_size}\n\n\n')
 					data_path = train_deep_model_config.data_path_template.format(current_window_size=window_size)
-					split_file = train_deep_model_config.read_from_file_template.format(current_window_size=window_size)
+					split_file = train_deep_model_config.read_from_file
 					train_deep_model(
 						data_path=data_path,
 						num_dimensions=train_deep_model_config.num_dimensions,
