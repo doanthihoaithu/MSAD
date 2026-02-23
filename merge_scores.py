@@ -313,7 +313,18 @@ def main(cfg: DictConfig) -> None:
 	# 	)
 	# else:
 	metrics = cfg.merge_score.metrics
+	common_metrics = ['auc_pr', 'vus_pr']
+	interpretability_metrics = [f'interpretability_hit_{m}_score' for m in range(1, cfg.combine_detectors_evaluation.num_dimensions+1)]
 	metric_for_optimization = cfg.mts_current_metric_for_optimization
+	metrics = common_metrics + interpretability_metrics
+
+	if cfg.merge_score.time:
+		merge_inference_times(
+			path=cfg.merge_score.raw_predictions_path,
+			save_path=cfg.merge_score.save_path,
+			detector_execution_time_path=cfg.merge_score.detector_execution_time_path
+		)
+		print(f'Merge inference times to  {cfg.merge_score.save_path}')
 
 	for m in metrics:
 		merge_scores_mts(
@@ -325,14 +336,6 @@ def main(cfg: DictConfig) -> None:
 			mts_acc_tables_path=cfg.mts_current_acc_tables_path,
 		)
 		print(f'Merge scores metrics for {m}')
-
-	if cfg.merge_score.time:
-		merge_inference_times(
-			path=cfg.merge_score.raw_predictions_path,
-			save_path=cfg.merge_score.save_path,
-			detector_execution_time_path=cfg.merge_score.detector_execution_time_path
-		)
-		print(f'Merge inference times to  {cfg.merge_score.save_path}')
 
 if __name__ == "__main__":
 
