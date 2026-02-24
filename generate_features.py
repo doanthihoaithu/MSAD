@@ -51,15 +51,15 @@ def generate_features(path):
 
 	#TODO update for extract features for MTS
 	# x shape = [k, window_size, n_features] based on windowing dataset before flatten
-	# x = df.to_numpy()[:, np.newaxis]
-	x = df.to_numpy().reshape(df.shape[0], window_size,-1)
+	x = df.to_numpy()[:, np.newaxis]
+	# x = df.to_numpy().reshape(df.shape[0], window_size,-1)
 	index = df.index
 
 	# Setup the TSFresh feature extractor (too costly to use any other parameter)
 	fe = TSFreshFeatureExtractor(
 		default_fc_parameters="minimal",  # 'minimal' or 'efficient' or 'comprehensive'
 		show_warnings=False, 
-		n_jobs=-1
+		n_jobs=16
 	)
 	
 	# Compute features
