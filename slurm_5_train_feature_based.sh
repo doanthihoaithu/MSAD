@@ -5,7 +5,7 @@
 #SBATCH --time=24:00:00 # time limits: 1 hour
 #SBATCH --error=slurm_logs/train_feature_based.err # standard error file
 #SBATCH --output=slurm_logs/train_feature_based.out # standard output file
-#SBATCH --partition=gprod_gssi # partition name
+#SBATCH --partition=lprod # partition name
 #SBATCH --mail-type=END              # type of event notification
 #SBATCH --mail-user=thihoaithu.doan@gssi.it   # mail address
 
