@@ -187,7 +187,7 @@ def main(cfg: DictConfig) -> None:
 		for window_size in window_sizes:
 			print(f'\n\nRunning Rocket for window size: {window_size}\n')
 			path = rocket_config.path_template.format(current_window_size=window_size)
-			file = rocket_config.file_template.format(current_window_size=window_size)
+			file = rocket_config.read_from_file
 			run_rocket(
 				data_path=path,
 				num_dimensions=num_dimensions,

@@ -169,6 +169,10 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 						model_parameters['original_length'] = window_size
 					if 'timeseries_size' in model_parameters:
 						model_parameters['timeseries_size'] = window_size
+					if 'in_channels' in model_parameters:
+						model_parameters['in_channels'] = combine_detector_evaluation_config.num_dimensions
+					if 'original_dim' in model_parameters:
+						model_parameters['original_dim'] = combine_detector_evaluation_config.num_dimensions
 
 					# Load model
 					model = deep_models[model_name](**model_parameters)
@@ -240,6 +244,7 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 					deep_model=True if model_name in deep_models.keys() else False,
 					is_rocket_model= True if model_name == 'rocket' else False,
 					device='cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu',
+					n_detectors=len(scoreloader.get_detector_names())
 				)
 				# print(window_pred_probabilities.keys())
 				top_k_list = combine_detector_evaluation_config.top_k_list
@@ -266,7 +271,7 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 						metric_values = scoreloader.compute_metric(univarate_labels_dict.values(), weighted_scores,
 															   metric=metric_name, n_jobs=8)
 						metric_values_dict[metric_name] = metric_values
-					for metric_name in ['interpretability_hit_2_score']:
+					for metric_name in [f'interpretability_hit_{k}_score' for k in range(1, len(scoreloader.get_detector_names())+1)]:
 						metric_values = scoreloader.compute_interpretability_metric(multivariate_labels_dict.values(), weighted_contribution_scores,
 																   metric=metric_name, n_jobs=8)
 						metric_values_dict[metric_name] = metric_values

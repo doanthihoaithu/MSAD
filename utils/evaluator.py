@@ -109,10 +109,11 @@ class Evaluator:
 			data_path,
 			num_dimensions,
 			metric_for_optimization,
+			n_detectors,
 			batch_size=64,
 			deep_model=True,
 			is_rocket_model=False,
-			device='cuda'
+			device='cuda',
 	):
 		"""Predict function for all the models
 
@@ -155,7 +156,7 @@ class Evaluator:
 			else:
 				X_val, y_val = data.__getallsamples__().astype('float32'), data.__getalllabels__()
 				tic = perf_counter()
-				preds_with_probs = self.predict_timeseries_with_prob_non_deep(model, is_rocket_model, X_val, y_val)
+				preds_with_probs = self.predict_timeseries_with_prob_non_deep(model, is_rocket_model, X_val, y_val, n_detectors)
 
 			preds_with_probs_dict[fname] = preds_with_probs
 		return preds_with_probs_dict
@@ -233,7 +234,7 @@ class Evaluator:
 
 		return all_preds
 
-	def predict_timeseries_with_prob_non_deep(self, model, is_rocket, X_val, y_val):
+	def predict_timeseries_with_prob_non_deep(self, model, is_rocket, X_val, y_val, n_detectors):
 		all_preds = []
 		all_acc = []
 
@@ -242,7 +243,14 @@ class Evaluator:
 			preds = model.decision_function(X_val)
 		else:
 			# Make predictions
-			preds = model.predict_proba(X_val)
+			raw_preds = model.predict_proba(X_val)
+			classes = model.classes_
+
+			preds = np.apply_along_axis(convert_short_probability_to_match_num_detectors, 1, raw_preds, encoded_classes=classes, n_detectors=n_detectors)
+			# for p in raw_preds:
+			# 	formated_probability = self.convert_short_probability_to_match_num_detectors(p, classes, n_detectors)
+			# 	preds.append(formated_probability)
+			# preds = np.array(preds)
 
 		# preds = outputs.argmax(dim=1)
 		# acc = (y_val == preds).sum() / y_val.shape[0]
@@ -252,6 +260,12 @@ class Evaluator:
 		all_preds = np.array(all_preds)
 
 		return all_preds
+
+def convert_short_probability_to_match_num_detectors(probability, encoded_classes, n_detectors):
+	full_pred = np.zeros(n_detectors)
+	for index, p in enumerate(probability):
+		full_pred[int(encoded_classes[index])] = p
+	return full_pred
 
 
 def save_classifier(model, path, fname=None):

@@ -243,6 +243,7 @@ def eval_combine_multiple_detectors_with_predefine_selected_detectors(combine_de
 					deep_model=True if model_name in deep_models.keys() else False,
 					is_rocket_model= True if model_name == 'rocket' else False,
 					device='cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu',
+					n_detectors=len(scoreloader.get_detector_names())
 				)
 				# print(window_pred_probabilities.keys())
 				top_k_list = combine_detector_evaluation_config.top_k_list
