@@ -99,7 +99,8 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 				elif running_model_family == 'feature_based':
 					model_names.extend(list(classifiers.keys()))
 				else:
-					model_names.extend(['rocket'])
+					# model_names.extend(['rocket'])
+					print(f"Skip rocket...")
 
 		else:
 			assert running_mode == 'single', "Invalid running mode. Choose either 'all' or 'single'."

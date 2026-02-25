@@ -112,7 +112,7 @@ def main(config: DictConfig) -> None:
     all_methods_ens += [meth.format(length) for meth in methods_sit for length in all_length]
     all_methods_ens += [meth.format(length) for meth in methods_ts for length in all_length]
     all_methods_ens += [meth.format(length) for meth in methods_feature for length in all_length]
-    all_methods_ens += combined_detector_methods
+    # all_methods_ens += combined_detector_methods
 
     # Keep only the methods that exist in the results you read
     all_methods = detectors + Base_methods + all_methods_ens
