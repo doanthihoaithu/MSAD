@@ -271,7 +271,7 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 						metric_values = scoreloader.compute_metric(univarate_labels_dict.values(), weighted_scores,
 															   metric=metric_name, n_jobs=8)
 						metric_values_dict[metric_name] = metric_values
-					for metric_name in [f'interpretability_hit_{k}_score' for k in range(1, len(scoreloader.get_detector_names())+1)]:
+					for metric_name in [f'interpretability_hit_{k}_score' for k in range(1, (len(scoreloader.get_detector_names())+1)//2)]:
 						metric_values = scoreloader.compute_interpretability_metric(multivariate_labels_dict.values(), weighted_contribution_scores,
 																   metric=metric_name, n_jobs=8)
 						metric_values_dict[metric_name] = metric_values
