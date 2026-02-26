@@ -27,6 +27,7 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
 
     project_root_dir = get_project_root()
     test_filenames = [f.split('/')[1].replace('.out.csv', '.out') for f in test_filenames]
+    best_vus_pr_v1 = None
     for i, measure_name in enumerate(measure_names):
         total_of_metric_file_name = f'current_accuracy_{measure_name}.csv'
         total_of_metric_file_path = os.path.join(project_root_dir, results_dir, total_of_metric_file_name)
@@ -53,9 +54,7 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
         best_ms = method_means.idxmax() # Best MS may differ since results are may slightly vary (although distributions are solid)
         # best_ms = 'xxx'
         #     best_ms = 'resnet_1024' # Best model selector at the time publishing of our paper
-        print(f"Best Model Selector (MS) for VUS is: {best_ms}--->{final_names[best_ms]}")
 
-        best_vus_pr_v1 = best_ms
         if measure_name == 'VUS_PR':
             best_vus_pr_v1 = best_ms
             # best_vus_pr_v2 = best_ms_v2
@@ -65,6 +64,7 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
         else:
             # best_ms_v2 = best_vus_pr_v2
             best_ms = best_vus_pr_v1
+            print(f"Best Model Selector (MS) for VUS is: {best_ms}--->{final_names[best_ms]}")
             # selected_best_ms_combine_raw_names = best_vus_pr_v2_list
 
         # old_method_order = ['OCSVM','POLY','LSTM','CNN','HBOS','PCA','IFOREST','AE','LOF','IFOREST1','MP','NORMA']
