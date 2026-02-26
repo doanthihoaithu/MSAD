@@ -255,6 +255,7 @@ def merge_scores_mts_without_selector(path, metric_for_optimization, save_path, 
 def merge_inference_times(path, save_path, detector_execution_time_path):
 	# detectors_inf_time_path = ('results_mts/execution_time/detectors_inference_time.csv')
 	detectors_inf_time_path = detector_execution_time_path
+	os.makedirs(save_path, exist_ok=True)
 
 	# Read raw predictions of each model selector and fix indexing
 	selector_predictions = {}

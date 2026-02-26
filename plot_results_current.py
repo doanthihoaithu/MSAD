@@ -12,18 +12,13 @@ from utils.utils import get_project_root
 import seaborn as sns
 
 
-def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_dir, save_dir, test_filenames, all_methods_ens):
+def plot_result_boxplot_dataset(detectors, final_names, measure_names, mts_current_metric_for_optimization, results_dir, save_dir, test_filenames, all_methods_ens):
 
     plt.rcParams.update({'font.size': 18})
     # plt.figure(figsize=(10, 5*len(measure_names)))
     plt.grid(color='k', linestyle='--', linewidth=1, alpha=0.2)
 
     figure, axis = plt.subplots(figsize=(10, 5*len(measure_names)), nrows=len(measure_names), ncols=1)
-
-    assert ('VUS_PR') in measure_names and ('AUC_PR' in measure_names), 'VUS_PR should be in measure_names'
-    measure_names.remove('VUS_PR')
-    measure_names.remove('AUC_PR')
-    measure_names = ['VUS_PR'] + measure_names + ['AUC_PR']
 
     project_root_dir = get_project_root()
     test_filenames = [f.split('/')[1].replace('.out.csv', '.out') for f in test_filenames]
@@ -55,16 +50,16 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
         # best_ms = 'xxx'
         #     best_ms = 'resnet_1024' # Best model selector at the time publishing of our paper
 
-        if measure_name == 'VUS_PR':
+        if measure_name == mts_current_metric_for_optimization:
             best_vus_pr_v1 = best_ms
             # best_vus_pr_v2 = best_ms_v2
             # best_vus_pr_v2_list = selected_best_ms_combine_raw_names
-            print('best_ms_v1 for VUS_PR:', best_vus_pr_v1)
+            print(f'best_ms_v1 for optimizing {mts_current_metric_for_optimization} is:', best_vus_pr_v1)
             # print('best_ms_v2 for VUS_PR:', best_vus_pr_v2)
         else:
             # best_ms_v2 = best_vus_pr_v2
             best_ms = best_vus_pr_v1
-            print(f"Best Model Selector (MS) for VUS is: {best_ms}--->{final_names[best_ms]}")
+            print(f"Best Model Selector (MS) for optimizing {mts_current_metric_for_optimization} is: {best_ms}--->{final_names[best_ms]}")
             # selected_best_ms_combine_raw_names = best_vus_pr_v2_list
 
         # old_method_order = ['OCSVM','POLY','LSTM','CNN','HBOS','PCA','IFOREST','AE','LOF','IFOREST1','MP','NORMA']
@@ -115,7 +110,10 @@ def main(config: DictConfig) -> None:
     print(test_filenames)
 
     measure_names = metricsloader.get_names()
+    assert mts_current_metric_for_optimization in measure_names, f"{mts_current_metric_for_optimization} should be in measure_names"
 
+    measure_names.remove(mts_current_metric_for_optimization)
+    measure_names = [mts_current_metric_for_optimization] + measure_names
 
     detectors = config.mts_supported_detectors
 
@@ -156,7 +154,7 @@ def main(config: DictConfig) -> None:
     plot_save_dir = os.path.join(project_root_dir, config.merge_score.save_path, 'plots')
     os.makedirs(plot_save_dir, exist_ok=True)
 
-    plot_result_boxplot_dataset(detectors, final_names, measure_names, results_dir, plot_save_dir, test_filenames, all_methods_ens)
+    plot_result_boxplot_dataset(detectors, final_names, measure_names, mts_current_metric_for_optimization, results_dir, plot_save_dir, test_filenames, all_methods_ens)
 
 if __name__ == '__main__':
     main()
