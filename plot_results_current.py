@@ -50,7 +50,7 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
         #     best_ms = 'resnet_1024' # Best model selector at the time publishing of our paper
         print(f"Best Model Selector (MS) for VUS is: {best_ms}--->{final_names[best_ms]}")
 
-        best_vus_pr_v1 = None
+        best_vus_pr_v1 = best_ms
         if measure_name == 'VUS_PR':
             best_vus_pr_v1 = best_ms
             # best_vus_pr_v2 = best_ms_v2
@@ -76,10 +76,11 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
         for x in tmp_methods:
             if x != best_ms:
                 xticks_labels.append(final_names[x])
-            else:
-                xticks_labels.append(final_names['best_ms'])
+            elif x == best_ms:
+                xticks_labels.append(final_names['best_ms'].format(final_names[best_ms]))
 
-        axis[i].set_xticks(list(range(len(xticks_labels))), xticks_labels, rotation=45)
+
+        axis[i].set_xticks(list(range(len(xticks_labels))), xticks_labels, rotation=90)
         axis[i].set_ylabel(final_names[measure_name])
 
         axis[i].axvline(9.5, color='black', linestyle='--')
