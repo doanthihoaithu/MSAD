@@ -195,6 +195,51 @@ class ScoresLoader:
 
 		return multivariate_labels_dict, idx_failed
 
+	# def load_multivariate_score_per_var(self, file_names):
+	# 	'''
+	# 	Load the score for the specified files/timeseries. If a time series has no score for all
+	# 	the detectors (e.g. the anomaly score has been computed for 10/12 detectors) the this
+	# 	time series is skipped. Its index is returned in the idx_failed for the user to remove
+	# 	it from any other places if needed.
+	#
+	# 	:param dataset: list of files
+	# 	:return scores: the loaded scores
+	# 	:return idx_failed: list with indexes of not loaded time series
+	# 	'''
+	# 	detectors = self.get_detector_names()
+	# 	scores = []
+	# 	idx_failed = []
+	# 	per_var_contribution = []
+	# 	for i, name in enumerate(tqdm(file_names, desc='Loading scores')):
+	# 		name_split = name.split('/')[-2:]
+	# 		paths = [os.path.join(self.scores_path, name_split[0], detector, name_split[1]) for detector in detectors]
+	# 		contribution_per_var_paths = [os.path.join(self.scores_path, name_split[0], detector, f'{name_split[1]}.dimension_contribution') for detector in
+	# 				 detectors]
+	# 		data = []
+	# 		contribution_per_var_data = []
+	# 		try:
+	# 			for path, score_per_var_path in zip(paths, contribution_per_var_paths):
+	# 				data.append(pd.read_csv(path, header=None).to_numpy())
+	# 				contribution_per_var = pd.read_csv(score_per_var_path, header=None).to_numpy()
+	# 				assert contribution_per_var.ndim == 2
+	# 				# score_per_var = score_per_var/score_per_var.sum(axis=1, keepdims=True)
+	# 				contribution_per_var_data.append(contribution_per_var)
+	#
+	# 		except Exception as e:
+	# 			idx_failed.append(i)
+	# 			continue
+	# 		scores.append(np.concatenate(data, axis=1))
+	# 		per_var_contribution.append(np.stack(contribution_per_var_data, axis=1))
+	#
+	# 	# Delete ts which failed to load
+	# 	if len(idx_failed) > 0:
+	# 		print('failed to load')
+	# 		for idx in sorted(idx_failed, reverse=True):
+	# 			print('\t\'{}\''.format(file_names[idx]))
+	# 			# del file_names[idx]
+	#
+	# 	return scores, per_var_contribution, idx_failed
+
 	def load_multivariate_score_per_var(self, file_names):
 		'''
 		Load the score for the specified files/timeseries. If a time series has no score for all
@@ -210,26 +255,17 @@ class ScoresLoader:
 		scores = []
 		idx_failed = []
 		per_var_contribution = []
-		for i, name in enumerate(tqdm(file_names, desc='Loading scores')):
-			name_split = name.split('/')[-2:]
-			paths = [os.path.join(self.scores_path, name_split[0], detector, name_split[1]) for detector in detectors]
-			contribution_per_var_paths = [os.path.join(self.scores_path, name_split[0], detector, f'{name_split[1]}.dimension_contribution') for detector in
-					 detectors]
-			data = []
-			contribution_per_var_data = []
-			try:
-				for path, score_per_var_path in zip(paths, contribution_per_var_paths):
-					data.append(pd.read_csv(path, header=None).to_numpy())
-					contribution_per_var = pd.read_csv(score_per_var_path, header=None).to_numpy()
-					assert contribution_per_var.ndim == 2
-					# score_per_var = score_per_var/score_per_var.sum(axis=1, keepdims=True)
-					contribution_per_var_data.append(contribution_per_var)
 
-			except Exception as e:
-				idx_failed.append(i)
-				continue
-			scores.append(np.concatenate(data, axis=1))
-			per_var_contribution.append(np.stack(contribution_per_var_data, axis=1))
+		with multiprocessing.Pool(processes=16) as pool:  # or whatever your hardware can support
+
+			args_list = [(i, name, detectors, self.scores_path) for i, name in enumerate(file_names)]
+			# have your pool map the file names to dataframes
+			df_list = pool.starmap(load_scores_from_all_detectors_of_a_test_file, args_list)
+
+			scores.extend([df[0] for df in df_list])
+			per_var_contribution.extend([df[1] for df in df_list])
+			for fail_ids in [df[2] for df in df_list]:
+				idx_failed.extend(fail_ids)
 
 		# Delete ts which failed to load
 		if len(idx_failed) > 0:
@@ -239,6 +275,7 @@ class ScoresLoader:
 				# del file_names[idx]
 
 		return scores, per_var_contribution, idx_failed
+
 
 	def write(self, file_names, detector, score, metric):
 		'''Write some scores for a specific detector
@@ -579,3 +616,27 @@ def istarmap(self, func, iterable, chunksize=1):
 
 
 mpp.Pool.istarmap = istarmap
+
+def load_scores_from_all_detectors_of_a_test_file(i, name, detectors, scores_path):
+	# for i, name in enumerate(tqdm(file_names, desc='Loading scores')):
+	idx_failed = []
+	name_split = name.split('/')[-2:]
+	paths = [os.path.join(scores_path, name_split[0], detector, name_split[1]) for detector in detectors]
+	contribution_per_var_paths = [os.path.join(scores_path, name_split[0], detector, f'{name_split[1]}.dimension_contribution') for detector in
+			 detectors]
+	data = []
+	contribution_per_var_data = []
+	try:
+		for path, score_per_var_path in zip(paths, contribution_per_var_paths):
+			data.append(pd.read_csv(path, header=None).to_numpy())
+			contribution_per_var = pd.read_csv(score_per_var_path, header=None).to_numpy()
+			assert contribution_per_var.ndim == 2
+			# score_per_var = score_per_var/score_per_var.sum(axis=1, keepdims=True)
+			contribution_per_var_data.append(contribution_per_var)
+
+	except Exception as e:
+		idx_failed.append(i)
+
+	return np.concatenate(data, axis=1), np.stack(contribution_per_var_data, axis=1), idx_failed
+	# scores.append(np.concatenate(data, axis=1))
+	# per_var_contribution.append(np.stack(contribution_per_var_data, axis=1))
