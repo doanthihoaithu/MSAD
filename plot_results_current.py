@@ -20,6 +20,11 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
 
     figure, axis = plt.subplots(figsize=(10, 5*len(measure_names)), nrows=len(measure_names), ncols=1)
 
+    assert ('VUS_PR') in measure_names and ('AUC_PR' in measure_names), 'VUS_PR should be in measure_names'
+    measure_names.remove('VUS_PR')
+    measure_names.remove('AUC_PR')
+    measure_names = ['VUS_PR'] + measure_names + ['AUC_PR']
+
     project_root_dir = get_project_root()
     test_filenames = [f.split('/')[1].replace('.out.csv', '.out') for f in test_filenames]
     for i, measure_name in enumerate(measure_names):
