@@ -314,7 +314,9 @@ def main(cfg: DictConfig) -> None:
 	# else:
 	metrics = cfg.merge_score.metrics
 	common_metrics = ['auc_pr', 'vus_pr']
-	interpretability_metrics = [f'interpretability_hit_{m}_score' for m in range(1, cfg.combine_detectors_evaluation.num_dimensions+1)]
+	interpretability_metrics_1 = [f'interpretability_hit_{m}_score' for m in range(1, cfg.combine_detectors_evaluation.num_dimensions+1)]
+	interpretability_metrics_2 = [f'interpretability_conditional_hit_{m}_score' for m in range(1, cfg.combine_detectors_evaluation.num_dimensions+1)]
+	interpretability_metrics = interpretability_metrics_1 + interpretability_metrics_2
 	metric_for_optimization = cfg.mts_current_metric_for_optimization
 	metrics = common_metrics + interpretability_metrics
 
