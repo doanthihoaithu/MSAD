@@ -41,14 +41,26 @@ def plot_result_boxplot_dataset(detectors, final_names, measure_names, results_d
         print(df.columns, df.shape)
 
         # Calculate the mean performance for each Model Selector (MS)
-        method_means = df[[x for x in all_methods_ens if x in df.columns]].mean()
+        method_means = df[[x for x in all_methods_ens if x in df.columns]].median()
         print(df.columns)
         print(all_methods_ens)
         print('Selectors:',method_means )
         best_ms = method_means.idxmax() # Best MS may differ since results are may slightly vary (although distributions are solid)
         # best_ms = 'xxx'
         #     best_ms = 'resnet_1024' # Best model selector at the time publishing of our paper
-        print(f"Best Model Selector (MS) is: {best_ms}--->{final_names[best_ms]}")
+        print(f"Best Model Selector (MS) for VUS is: {best_ms}--->{final_names[best_ms]}")
+
+        best_vus_pr_v1 = None
+        if measure_name == 'VUS_PR':
+            best_vus_pr_v1 = best_ms
+            # best_vus_pr_v2 = best_ms_v2
+            # best_vus_pr_v2_list = selected_best_ms_combine_raw_names
+            print('best_ms_v1 for VUS_PR:', best_vus_pr_v1)
+            # print('best_ms_v2 for VUS_PR:', best_vus_pr_v2)
+        else:
+            # best_ms_v2 = best_vus_pr_v2
+            best_ms = best_vus_pr_v1
+            # selected_best_ms_combine_raw_names = best_vus_pr_v2_list
 
         # old_method_order = ['OCSVM','POLY','LSTM','CNN','HBOS','PCA','IFOREST','AE','LOF','IFOREST1','MP','NORMA']
         old_method_order = df[detectors].median().sort_values(ascending=False).index.tolist()[::-1]

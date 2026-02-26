@@ -5,7 +5,8 @@
 #SBATCH --time=24:00:00 # time limits: 1 hour
 #SBATCH --error=slurm_logs/combine_detectors_feature_based_models.err # standard error file
 #SBATCH --output=slurm_logs/combine_detectors_feature_based_models.out # standard output file
-#SBATCH --partition=lprod # partition name
+#SBATCH --partition=gprod_gssi # partition name
+#SBATCH --gres=gpu:1
 #SBATCH --mail-type=END              # type of event notification
 #SBATCH --mail-user=thihoaithu.doan@gssi.it   # mail address
 
