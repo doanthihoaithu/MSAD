@@ -283,7 +283,11 @@ def eval_combine_multiple_detectors_with_predefine_selected_detectors(combine_de
 															   metric=metric_name, n_jobs=8)
 						metric_values_dict[metric_name] = metric_values
 					for metric_name in ['interpretability_hit_2_score']:
-						metric_values = scoreloader.compute_interpretability_metric(multivariate_labels_dict.values(), weighted_contribution_scores,
+						metric_values = scoreloader.compute_interpretability_metric(
+																	univarate_labels_dict.values(),
+																	weighted_scores,
+																	multivariate_labels_dict.values(),
+																	weighted_contribution_scores,
 																   metric=metric_name, n_jobs=8)
 						metric_values_dict[metric_name] = metric_values
 

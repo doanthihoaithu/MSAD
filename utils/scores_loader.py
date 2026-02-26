@@ -18,7 +18,8 @@ from utils.config import multivariate_detector_names
 from utils.metrics_loader import MetricsLoader
 from utils.data_loader import DataLoader
 # from utils.config import *
-from utils.metrics import generate_curve, InterpretabilityLogScore, InterpretabilityHitKScore
+from utils.metrics import generate_curve, InterpretabilityLogScore, InterpretabilityHitKScore, \
+	InterpretabilityConditionalHitKScore
 
 from numba import jit
 import os, glob
@@ -305,7 +306,7 @@ class ScoresLoader:
 
 		return results
 
-	def compute_interpretability_metric(self, multivariate_labels, distribution_scores, metric, verbose=1, n_jobs=1):
+	def compute_interpretability_metric(self, univariate_labels, univariate_scores, multivariate_labels, distribution_scores, metric, verbose=1, n_jobs=1):
 		'''Computes desired metric for all labels and scores pairs.
 
 		:param multivariate_labels: list of 2D arrays each representing the labels of a timeseries/sample
@@ -331,12 +332,11 @@ class ScoresLoader:
 
 			results = np.asarray([x.tolist() for x in results])
 		else:
-			for i, x, y in tqdm(zip(range(n_files), multivariate_labels, distribution_scores), total=n_files, desc='Compute {}'.format(metric), disable=not verbose):
-				results.append(self.compute_single_multivariate_sample(x, y, metric))
+			for i, x_univariate, y_univariate, x_multivariate, y_multivariate in tqdm(zip(range(n_files), univariate_labels, univariate_scores, multivariate_labels, distribution_scores), total=n_files, desc='Compute {}'.format(metric), disable=not verbose):
+				results.append(self.compute_single_multivariate_sample(x_univariate, y_univariate, x_multivariate, y_multivariate, metric))
 			results = np.asarray(results)
 
 		return results
-
 
 	def compute_single_sample(self,	label, score, metric):
 		'''Compute a metric for a single sample and multiple scores.
@@ -378,7 +378,7 @@ class ScoresLoader:
 
 		return result.T
 
-	def compute_single_multivariate_sample(self, multivariate_label, multivariate_score, metric):
+	def compute_single_multivariate_sample(self, univariate_label, univariate_score, multivariate_label, multivariate_score, metric):
 		'''Compute a metric for a single sample and multiple scores.
 
 		:param multivariate_label: 2D array of 0, 1 labels, (len_ts)
@@ -394,8 +394,7 @@ class ScoresLoader:
 			raise ValueError("label has more dimensions than expected.")
 
 		tick = time.process_time()
-		result = self.compute_single_multivariate_metric(multivariate_score, multivariate_label, metric)
-
+		result = self.compute_single_multivariate_metric(univariate_score, univariate_label, multivariate_score, multivariate_label, metric)
 		'''
 		# Evaluate the computed metrics
 		fig, ax = plt.subplots(3, 4, figsize=(15, 10))
@@ -493,7 +492,7 @@ class ScoresLoader:
 
 		return result
 
-	def compute_single_multivariate_metric(self, multivariate_scores, multivariate_labels, metric):
+	def compute_single_multivariate_metric(self,  univariate_scores, univariate_labels, multivariate_scores, multivariate_labels, metric):
 		'''Compute a metric for a single sample and score.
 
 		:param multivariate_labels: 1D array of 0, 1 labels
@@ -507,7 +506,13 @@ class ScoresLoader:
 		metric = metric.lower()
 		if metric.startswith('interpretability_hit'):
 			top_k = int(re.search(r'\d+', metric).group())
+			# result = InterpretabilityHitKScore(top_k).score(multivariate_labels, multivariate_scores)
 			result = InterpretabilityHitKScore(top_k).score(multivariate_labels, multivariate_scores)
+		elif metric.startswith('interpretability_conditional_hit'):
+			top_k = int(re.search(r'\d+', metric).group())
+			# result = InterpretabilityHitKScore(top_k).score(multivariate_labels, multivariate_scores)
+			result = InterpretabilityConditionalHitKScore(top_k).score_and_output_details(univariate_labels, univariate_scores, multivariate_labels,
+															multivariate_scores)[0]
 		elif metric.startswith('interpretability_log'):
 			result = InterpretabilityLogScore(include_negative=False).score(multivariate_labels, multivariate_scores)
 		else:
@@ -518,6 +523,33 @@ class ScoresLoader:
 		# 	print('>> Pottentially faulty metrics result {}'.format(result))
 
 		return result
+
+	# def compute_hit_k_based_on_accuracy_metric(self, univariate_scores, univariate_labels, multivariate_scores, multivariate_labels, metric):
+	# 	'''Compute a metric for a single sample and score.
+	#
+	# 	:param multivariate_labels: 1D array of 0, 1 labels
+	# 	:param multivariate_scores: 1D array same length as label
+	# 	:param metric: string to which metric to compute
+	# 	:return: a single value
+	# 	'''
+	# 	if multivariate_labels.shape != multivariate_scores.shape:
+	# 		raise ValueError("label and metric should have the same length.")
+	#
+	# 	metric = metric.lower()
+	# 	if metric.startswith('interpretability_hit'):
+	# 		top_k = int(re.search(r'\d+', metric).group())
+	# 		# result = InterpretabilityHitKScore(top_k).score(multivariate_labels, multivariate_scores)
+	# 		result = InterpretabilityHitKScoreUpdate(top_k).score(univariate_scores, univariate_labels, multivariate_labels, multivariate_scores)
+	# 	elif metric.startswith('interpretability_log'):
+	# 		result = InterpretabilityLogScore(include_negative=False).score(multivariate_labels, multivariate_scores)
+	# 	else:
+	# 		raise ValueError("can't recognize metric requested")
+	#
+	# 	# result = round(result, 5)
+	# 	# if result > 1 or result < 0:
+	# 	# 	print('>> Pottentially faulty metrics result {}'.format(result))
+	#
+	# 	return result
 
 	def compute_fscore(self, threshold, score, label):
 		score = score > threshold

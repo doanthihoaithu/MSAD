@@ -118,7 +118,11 @@ class Avg_ens:
 					metric_values = scoresloader.compute_metric(y, avg_ens_scores, metric=curr_metric, n_jobs=n_jobs)
 					metric_values_dict[curr_metric] = metric_values
 				else:
-					# avg_ens_distribution_scores[np.isnan(avg_ens_distribution_scores)] = 0
-					metric_values = scoresloader.compute_interpretability_metric(multivariate_labels, avg_ens_distribution_scores, metric=curr_metric, n_jobs=n_jobs)
+					metric_values = scoresloader.compute_interpretability_metric(
+						y,
+						avg_ens_scores,
+						multivariate_labels,
+						avg_ens_distribution_scores,
+						metric=curr_metric, n_jobs=n_jobs)
 					metric_values_dict[curr_metric] = metric_values
 		return metric_values_dict
