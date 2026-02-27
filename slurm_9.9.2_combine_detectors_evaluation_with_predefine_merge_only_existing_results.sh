@@ -5,8 +5,7 @@
 #SBATCH --time=24:00:00 # time limits: 1 hour
 #SBATCH --error=slurm_logs/predefine_combine_detectors_merge_only_existing_results.err # standard error file
 #SBATCH --output=slurm_logs/predefine_combine_detectors_merge_only_existing_results.out # standard output file
-#SBATCH --gres=gpu:a100:1
-#SBATCH --partition=gprod_gssi # partition name
+#SBATCH --partition=lprod # partition name
 #SBATCH --mail-type=END              # type of event notification
 #SBATCH --mail-user=thihoaithu.doan@gssi.it   # mail address
 
