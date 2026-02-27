@@ -521,30 +521,33 @@ class InterpretabilityConditionalHitKScore:
         y_true = (y_true_multivariate.sum(axis=1)>=1).astype(float)
         assert (y_true == y_true_univariate).all()
 
-        precision, recall, thresholds = precision_recall_curve(y_true_univariate, y_score_univariate)
+        precision, recall, thresholds = precision_recall_curve(y_true_univariate, np.round(y_score_univariate,2))
         f1_scores = 2 * (precision * recall) / (precision + recall)
         max_f1_score = np.max(f1_scores)
-        optimal_threshold = thresholds[np.argmax(f1_scores)]
+        #optimal_threshold = thresholds[np.argmax(f1_scores)]
 
-        if np.isnan(max_f1_score):
-            max_f1_score = 0.0
-            optimal_threshold = np.nan
+        #if np.isnan(max_f1_score):
+        #    max_f1_score = 0.0
+        #    optimal_threshold = np.nan
+        all_results = []
+        for optimal_threshold in thresholds:
+            detected_anomalies = np.array(y_score_univariate >= optimal_threshold, dtype=float)
 
-        detected_anomalies = np.array(y_score_univariate >= optimal_threshold, dtype=float)
+            anomaly_scores_per_var_ranking = np.argsort(y_score_per_var, axis=1)
+            top_k_anomalous_dimension = anomaly_scores_per_var_ranking[:, -self.top_k:]
+            interpretability_list = []
+            for labels, top_k_index, detected_anomaly in zip(y_true_multivariate, top_k_anomalous_dimension, detected_anomalies):
+                if labels.sum() != 0.0 and detected_anomaly != 0.0:
+                    interpretability = labels[top_k_index].sum() / labels.sum()
+                    interpretability_list.append(interpretability)
+                else:
+                    interpretability_list.append(0)
+            # interpretability_scores = np.sqrt(np.power(multivariate_labels-anomaly_scores_per_var,2).sum(axis=1))
+            interpretability_scores = np.array(interpretability_list)
+            all_results.append((interpretability_scores[y_true == 1.0].mean(), max_f1_score, optimal_threshold))
 
-        anomaly_scores_per_var_ranking = np.argsort(y_score_per_var, axis=1)
-        top_k_anomalous_dimension = anomaly_scores_per_var_ranking[:, -self.top_k:]
-        interpretability_list = []
-        for labels, top_k_index, detected_anomaly in zip(y_true_multivariate, top_k_anomalous_dimension, detected_anomalies):
-            if labels.sum() != 0.0 and detected_anomaly != 0.0:
-                interpretability = labels[top_k_index].sum() / labels.sum()
-                interpretability_list.append(interpretability)
-            else:
-                interpretability_list.append(0)
-        # interpretability_scores = np.sqrt(np.power(multivariate_labels-anomaly_scores_per_var,2).sum(axis=1))
-        interpretability_scores = np.array(interpretability_list)
-
-        return interpretability_scores[y_true == 1.0].mean(), max_f1_score, optimal_threshold
+        all_results = np.array(all_results)
+        return np.trapz(all_results[:,0],all_results[:,2]), 0, 0
 
     # def supports_continuous_scorings(self) -> bool:
     #     return True
