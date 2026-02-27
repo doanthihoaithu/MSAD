@@ -88,8 +88,8 @@ def eval_combine_multiple_detectors(combine_detector_evaluation_config,
 		multivariate_labels_dict, multivariate_label_idx_failed = scoreloader.load_multivariate_labels(fnames_for_loading_scores)
 		print(f'Ground truth labels for {len(fnames_for_loading_scores)} evaluated time series loaded.')
 
-		model_names = list(classifiers.keys())
-		# model_names = ['decision_tree']
+		# model_names = list(classifiers.keys())
+		model_names = ['decision_tree']
 
 		print("Model names to evaluate:", model_names)
 
