@@ -179,7 +179,8 @@ def combine_probabilities_average_with_predefine_top_k_detectors(pred_probabilit
         averaged_probabilities_filtered[top_k_indices] = averaged_probabilities[top_k_indices]
 
         # Normalize probabilities so that they sum to 1
-        averaged_probabilities_filtered = averaged_probabilities_filtered / sum(averaged_probabilities_filtered)
+        if sum(averaged_probabilities_filtered) != 0:
+            averaged_probabilities_filtered = averaged_probabilities_filtered / sum(averaged_probabilities_filtered)
 
         all_softmax_probabilities.append(averaged_probabilities_filtered)
 
@@ -219,10 +220,9 @@ def combine_probabilities_vote(pred_probabilities, k):
     return all_vote_probabilities
 
 
-def combine_probabilities_vote_with_predefine_top_k_detectors(pred_probabilities, top_k_indices):
+def combine_probabilities_vote_with_predefine_top_k_detectors(pred_probabilities, top_k_indices_list):
     all_vote_probabilities = []
-
-    for probabilities in pred_probabilities:
+    for probabilities, top_k_indices in zip(pred_probabilities, top_k_indices_list):
         num_classes = probabilities.shape[1]
 
         # Perform argmax operation along axis 0 to count the votes
@@ -239,14 +239,9 @@ def combine_probabilities_vote_with_predefine_top_k_detectors(pred_probabilities
         vote_probabilities_filtered = np.zeros_like(vote_probabilities)
         vote_probabilities_filtered[top_k_indices] = vote_probabilities[top_k_indices]
 
-        # Normalize probabilities so that they sum to 1
-        vote_probabilities_filtered = vote_probabilities_filtered / sum(vote_probabilities_filtered)
-
-        # # This is the same and faster just saying ;)
-        # bottom_indices = np.argsort(vote_counts)[:k]
-        # vote_counts[bottom_indices] = 0
-        # all_vote_probabilities.append(vote_counts/sum(vote_counts))
-
+        if  sum(vote_probabilities_filtered) != 0:
+            # Normalize probabilities so that they sum to 1
+            vote_probabilities_filtered = vote_probabilities_filtered / sum(vote_probabilities_filtered)
         all_vote_probabilities.append(vote_probabilities_filtered)
 
     return all_vote_probabilities

@@ -172,6 +172,10 @@ def eval_combine_multiple_detectors_with_predefine_selected_detectors(combine_de
 						model_parameters['original_length'] = window_size
 					if 'timeseries_size' in model_parameters:
 						model_parameters['timeseries_size'] = window_size
+					if 'in_channels' in model_parameters:
+						model_parameters['in_channels'] = combine_detector_evaluation_config.num_dimensions
+					if 'original_dim' in model_parameters:
+						model_parameters['original_dim'] = combine_detector_evaluation_config.num_dimensions
 
 					# Load model
 					model = deep_models[model_name](**model_parameters)
@@ -280,15 +284,19 @@ def eval_combine_multiple_detectors_with_predefine_selected_detectors(combine_de
 					# for index, fname in enumerate(fnames_for_loading_scores):
 					for metric_name in ['auc_pr', 'vus_pr']:
 						metric_values = scoreloader.compute_metric(univarate_labels_dict.values(), weighted_scores,
-															   metric=metric_name, n_jobs=8)
+									   metric=metric_name, n_jobs=8)
 						metric_values_dict[metric_name] = metric_values
-					for metric_name in ['interpretability_hit_2_score']:
-						metric_values = scoreloader.compute_interpretability_metric(
-																	univarate_labels_dict.values(),
-																	weighted_scores,
-																	multivariate_labels_dict.values(),
-																	weighted_contribution_scores,
-																   metric=metric_name, n_jobs=8)
+					interpretability_metric_names_1 = [f'interpretability_conditional_hit_{k}_score' for k in
+													   range(1, (len(scoreloader.get_detector_names()) + 1) // 2)]
+					interpretability_metric_names_2 = [f'interpretability_hit_{k}_score' for k in
+													   range(1, (len(scoreloader.get_detector_names()) + 1) // 2)]
+					interpretability_metrics = interpretability_metric_names_1 + interpretability_metric_names_2
+					for metric_name in interpretability_metrics:
+						metric_values = scoreloader.compute_interpretability_metric(univarate_labels_dict.values(),
+																					weighted_scores,
+																					multivariate_labels_dict.values(),
+																					weighted_contribution_scores,
+																					metric=metric_name, n_jobs=8)
 						metric_values_dict[metric_name] = metric_values
 
 					# Save results
