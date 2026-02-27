@@ -115,8 +115,8 @@ def eval_combine_multiple_detectors_with_predefine_selected_detectors(combine_de
 				# model_names = ['sit_conv_patch', 'sit_linear_patch', 'sit_stem_original', 'sit_stem_relu']
 				model_names = ['sit_conv_patch', 'sit_linear_patch', 'sit_stem_original']
 			elif running_model_family == 'feature_based':
-				model_names = list(classifiers.keys())
-				# model_names = ['qda']
+				# model_names = list(classifiers.keys())
+				model_names = ['decision_tree']
 			else:
 				model_names = ['rocket']
 
