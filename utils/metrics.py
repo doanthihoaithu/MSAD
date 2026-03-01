@@ -527,25 +527,29 @@ class InterpretabilityConditionalHitKScore:
         max_f1_score = np.max(f1_scores)
         optimal_threshold = thresholds[np.argmax(f1_scores)]
 
+
         if np.isnan(max_f1_score):
             max_f1_score = 0.0
             optimal_threshold = np.nan
 
-        detected_anomalies = np.array(y_score_univariate >= optimal_threshold, dtype=float)
+        score = calculate_interpretability_scores(y_score_univariate, y_true_multivariate, y_score_per_var, self.top_k)
+        return score, max_f1_score, optimal_threshold
 
-        anomaly_scores_per_var_ranking = np.argsort(y_score_per_var, axis=1)
-        top_k_anomalous_dimension = anomaly_scores_per_var_ranking[:, -self.top_k:]
-        interpretability_list = []
-        for labels, top_k_index, detected_anomaly in zip(y_true_multivariate, top_k_anomalous_dimension, detected_anomalies):
-            if labels.sum() != 0.0 and detected_anomaly != 0.0:
-                interpretability = labels[top_k_index].sum() / labels.sum()
-                interpretability_list.append(interpretability)
-            else:
-                interpretability_list.append(0)
-        # interpretability_scores = np.sqrt(np.power(multivariate_labels-anomaly_scores_per_var,2).sum(axis=1))
-        interpretability_scores = np.array(interpretability_list)
-
-        return interpretability_scores[y_true == 1.0].mean(), max_f1_score, optimal_threshold
+        # detected_anomalies = np.array(y_score_univariate >= optimal_threshold, dtype=float)
+        #
+        # anomaly_scores_per_var_ranking = np.argsort(y_score_per_var, axis=1)
+        # top_k_anomalous_dimension = anomaly_scores_per_var_ranking[:, -self.top_k:]
+        # interpretability_list = []
+        # for labels, top_k_index, detected_anomaly in zip(y_true_multivariate, top_k_anomalous_dimension, detected_anomalies):
+        #     if labels.sum() != 0.0 and detected_anomaly != 0.0:
+        #         interpretability = labels[top_k_index].sum() / labels.sum()
+        #         interpretability_list.append(interpretability)
+        #     else:
+        #         interpretability_list.append(0)
+        # # interpretability_scores = np.sqrt(np.power(multivariate_labels-anomaly_scores_per_var,2).sum(axis=1))
+        # interpretability_scores = np.array(interpretability_list)
+        #
+        # return interpretability_scores[y_true == 1.0].mean(), max_f1_score, optimal_threshold
         # all_results = []
         # for optimal_threshold in thresholds:
         #     detected_anomalies = np.array(y_score_univariate >= optimal_threshold, dtype=float)
@@ -624,7 +628,7 @@ class InterpretabilityConditionalHitKScoreUpdate:
         all_results = []
         for optimal_threshold in thresholds:
             y_pred = np.array(y_score_univariate >= optimal_threshold, dtype=float)
-            result = self.calculate_interpretability_scores(y_pred, y_true_multivariate, y_score_per_var)
+            result = calculate_interpretability_scores(y_pred, y_true_multivariate, y_score_per_var, self.top_k)
             all_results.append((result, 0, optimal_threshold))
             # detected_anomalies = np.array(y_score_univariate >= optimal_threshold, dtype=float)
             #
@@ -645,25 +649,27 @@ class InterpretabilityConditionalHitKScoreUpdate:
         all_results = np.array(all_results)
         return np.trapz(all_results[:, 0], all_results[:, 2]), 0, 0
 
-    def calculate_interpretability_scores(self, y_pred, y_true_multivariate: np.ndarray, contribution_per_var: np.ndarray) -> np.ndarray:
-        top_k_indices_matrix = contribution_per_var.argsort(axis=1)[:, -self.top_k:]
-        interpretability_score_df = pd.DataFrame(columns=['score'])
-        interpretability_score_df['score'] = np.zeros(y_pred.shape[0])
-        interpretability_score_df['y_pred'] = y_pred
-        interpretability_score_df['y_true'] = (y_true_multivariate.sum(axis=1) >= 1).astype(float)
-        interpretability_score_df['detected_anomalous_dimension_count'] = np.take_along_axis(y_true_multivariate, top_k_indices_matrix, axis=1).sum(axis=1)
-        interpretability_score_df['true_anomalous_dimension_count'] = y_true_multivariate.sum(axis=1)
-        # interpretability_score_df.loc[interpretability_score_df['y_pred'] == 1.0, 'score'] = interpretability_score_df.loc[interpretability_score_df['y_true'] == 1.0].loc[interpretability_score_df['y_pred'] == 1.0, 'detected_anomalous_dimension_count'] / interpretability_score_df.loc[interpretability_score_df['y_true'] == 1.0].loc[interpretability_score_df['y_pred'] == 1.0, 'true_anomalous_dimension_count']
-        # interpretability_scores = np.zeros(y_pred.shape[0])
-        detected_true_anomaly_index = interpretability_score_df[interpretability_score_df['y_pred'] == 1.0].loc[interpretability_score_df['y_true'] == 1.0].index
-        interpretability_score_df.loc[detected_true_anomaly_index, 'score'] = interpretability_score_df.loc[detected_true_anomaly_index, 'detected_anomalous_dimension_count'].values / interpretability_score_df.loc[detected_true_anomaly_index,'true_anomalous_dimension_count'].values
-        return interpretability_score_df[interpretability_score_df['y_true'] == 1.0]['score'].mean()
-
-    # def supports_continuous_scorings(self) -> bool:
-    #     return True
     @property
     def name(self) -> str:
         return f'Interpretability_Conditional_Hit_{self.top_k}_Score_Update'.upper()
+
+def calculate_interpretability_scores(y_pred, y_true_multivariate: np.ndarray, contribution_per_var: np.ndarray, top_k) -> float:
+    top_k_indices_matrix = contribution_per_var.argsort(axis=1)[:, -top_k:]
+    interpretability_score_df = pd.DataFrame(columns=['score'])
+    interpretability_score_df['score'] = np.zeros(y_pred.shape[0])
+    interpretability_score_df['y_pred'] = y_pred
+    interpretability_score_df['y_true'] = (y_true_multivariate.sum(axis=1) >= 1).astype(float)
+    interpretability_score_df['detected_anomalous_dimension_count'] = np.take_along_axis(y_true_multivariate, top_k_indices_matrix, axis=1).sum(axis=1)
+    interpretability_score_df['true_anomalous_dimension_count'] = y_true_multivariate.sum(axis=1)
+    # interpretability_score_df.loc[interpretability_score_df['y_pred'] == 1.0, 'score'] = interpretability_score_df.loc[interpretability_score_df['y_true'] == 1.0].loc[interpretability_score_df['y_pred'] == 1.0, 'detected_anomalous_dimension_count'] / interpretability_score_df.loc[interpretability_score_df['y_true'] == 1.0].loc[interpretability_score_df['y_pred'] == 1.0, 'true_anomalous_dimension_count']
+    # interpretability_scores = np.zeros(y_pred.shape[0])
+    detected_true_anomaly_index = interpretability_score_df[interpretability_score_df['y_pred'] == 1.0].loc[interpretability_score_df['y_true'] == 1.0].index
+    interpretability_score_df.loc[detected_true_anomaly_index, 'score'] = interpretability_score_df.loc[detected_true_anomaly_index, 'detected_anomalous_dimension_count'].values / interpretability_score_df.loc[detected_true_anomaly_index,'true_anomalous_dimension_count'].values
+    return interpretability_score_df[interpretability_score_df['y_true'] == 1.0]['score'].mean()
+
+    # def supports_continuous_scorings(self) -> bool:
+    #     return True
+
 
 # class InterpretabilityHitKScore:
 #     """Takes an anomaly scoring and ground truth labels to compute and apply a threshold to the scoring.
