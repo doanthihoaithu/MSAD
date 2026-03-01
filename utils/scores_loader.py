@@ -19,7 +19,7 @@ from utils.metrics_loader import MetricsLoader
 from utils.data_loader import DataLoader
 # from utils.config import *
 from utils.metrics import generate_curve, InterpretabilityLogScore, InterpretabilityHitKScore, \
-	InterpretabilityConditionalHitKScore
+	InterpretabilityConditionalHitKScore, InterpretabilityConditionalHitKScoreUpdate
 
 from numba import jit
 import os, glob
@@ -545,11 +545,19 @@ class ScoresLoader:
 			top_k = int(re.search(r'\d+', metric).group())
 			# result = InterpretabilityHitKScore(top_k).score(multivariate_labels, multivariate_scores)
 			result = InterpretabilityHitKScore(top_k).score(multivariate_labels, multivariate_scores)
-		elif metric.startswith('interpretability_conditional_hit'):
+		elif metric.startswith('interpretability_conditional_hit') and not metric.endswith('_update'):
 			top_k = int(re.search(r'\d+', metric).group())
 			# result = InterpretabilityHitKScore(top_k).score(multivariate_labels, multivariate_scores)
 			result = InterpretabilityConditionalHitKScore(top_k).score_and_output_details(univariate_labels, univariate_scores, multivariate_labels,
 															multivariate_scores)[0]
+		elif metric.startswith('interpretability_conditional_hit') and metric.endswith('_update'):
+			top_k = int(re.search(r'\d+', metric).group())
+			# result = InterpretabilityHitKScore(top_k).score(multivariate_labels, multivariate_scores)
+			result = \
+			InterpretabilityConditionalHitKScoreUpdate(top_k).score_and_output_details(univariate_labels, univariate_scores,
+																				 multivariate_labels,
+																				 multivariate_scores)[0]
+
 		elif metric.startswith('interpretability_log'):
 			result = InterpretabilityLogScore(include_negative=False).score(multivariate_labels, multivariate_scores)
 		else:
