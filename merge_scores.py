@@ -249,7 +249,7 @@ def merge_scores_mts_without_selector(path, metric_for_optimization, save_path, 
 		# Save the final dataframe
 		os.makedirs(save_path, exist_ok=True)
 		final_df.to_csv(os.path.join(save_path, f'total_accuracy_{metric.upper()}.csv'), index=True)
-		print(f'Successfully save merged scores to {save_path}')
+		print(f'Successfully save merged scores to {save_path + "/total_accuracy_" + metric.upper() + ".csv"}')
 		print(final_df)
 
 def merge_inference_times(path, save_path, detector_execution_time_path):
@@ -300,7 +300,7 @@ def merge_inference_times(path, save_path, detector_execution_time_path):
 	
 	# Save the file with name model_selectors_inference_time.csv in the results/execution_time dir
 	final_df.to_csv(os.path.join(save_path, f'current_inference_time.csv'), index=True)
-	print(f'Successfully save merged inference times to {save_path}')
+	print(f'Successfully save merged inference times to {save_path + "/current_inference_time.csv"}')
 	print(final_df.head())
 
 @hydra.main(config_path="conf", config_name="config.yaml")
